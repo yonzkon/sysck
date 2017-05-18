@@ -1,0 +1,16 @@
+*.o
+*.a
+TAGS
+GTAGS
+GRTAGS
+GPATH
+
+bin/
+lib/
+include/
+thirdparty/
+build/
+tmp/
+
+.projectile
+.ycm_extra_conf.py*
