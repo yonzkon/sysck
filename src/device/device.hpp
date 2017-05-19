@@ -1,5 +1,5 @@
-#ifndef DEVICE_H
-#define DEVICE_H
+#ifndef DEVICE_HPP
+#define DEVICE_HPP
 
 #include <string>
 

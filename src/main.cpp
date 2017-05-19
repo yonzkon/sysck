@@ -6,7 +6,7 @@
 
 using namespace std;
 
-static void print_partitions(typename sysck::mmcblk::container &partitions)
+static void print_partitions(typename sysck::mmcblk::partition_container &partitions)
 {
 	for (auto &item : partitions) {
 		std::cout << item.major << " ";

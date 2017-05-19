@@ -11,7 +11,7 @@ template <class T,
 class storage_disk : public DetectPolicy<T>,
 					 public RecoverPolicy<T> {
 public:
-	typedef typename DetectPolicy<T>::Container container;
+	typedef typename DetectPolicy<T>::PartitionContainer partition_container;
 
 private:
 	storage_disk(storage_disk &rhs);
@@ -27,7 +27,7 @@ public:
 	virtual ~storage_disk() {}
 
 public:
-	const container& current_partitions() const
+	const partition_container& current_partitions() const
 	{
 		return partitions;
 	}
@@ -46,7 +46,7 @@ public:
 
 private:
 	std::string name;
-	container partitions;
+	partition_container partitions;
 };
 
 }

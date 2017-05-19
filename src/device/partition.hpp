@@ -1,7 +1,7 @@
 #ifndef PARTITION_HPP
 #define PARTITION_HPP
 
-#include "device.h"
+#include "device.hpp"
 #include <string>
 #include <sstream>
 #include <fstream>
@@ -36,9 +36,9 @@ struct partition : public device {
 
 template<class T>
 struct detect_partition_with_devfile {
-	typedef std::vector<T> Container;
+	typedef std::vector<T> PartitionContainer;
 
-	static void detect(std::string &name, Container &partitions)
+	static void detect(std::string &name, PartitionContainer &partitions)
 	{
 		std::regex pattern(name);
 		std::ifstream ifpart("/proc/partitions");
@@ -126,8 +126,7 @@ struct recover_partition_by_utils {
 		if (fd == -1)
 			return -1;
 
-		int value;
-		if (ioctl(fd, BLKRRPART, &value) == -1)
+		if (ioctl(fd, BLKRRPART, NULL) == -1)
 			return -1;
 
 		return 0;
