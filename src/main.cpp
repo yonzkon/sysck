@@ -1,4 +1,5 @@
 #include "device/mmcblk.hpp"
+#include "device/mbr_sector.hpp"
 #include "ui_MainWindow.h"
 #include <QApplication>
 #include <iostream>
@@ -29,6 +30,14 @@ static void print_partitions(typename sysck::mmcblk::partition_container &partit
 	}
 }
 
+static void make_sdcard_mbr(struct mbr_sector *mbr)
+{
+	// TODO: make sdcard mbr
+	mbr->tag = 0xaa55;
+	mbr->dpt[0].flag = 0;
+	mbr->dpt[0].type = 0x83;
+}
+
 static int check_sdcard(const char *name)
 {
 	unique_ptr<sysck::mmcblk> sdcard(new sysck::mmcblk(name));
@@ -45,7 +54,9 @@ static int check_sdcard(const char *name)
 	if (partitions.size() == 1) {
 		cout << "[WARNING] " << name << " is not partitioned." << endl;
 
-		if (sdcard->rebuild_table(name) == -1) {
+		struct mbr_sector mbr;
+		make_sdcard_mbr(&mbr);
+		if (sdcard->rebuild_table(name, &mbr) == -1) {
 			cout << "[FATAL] " << "rebuild_partition_table failed." << endl;
 			return -1;
 		}
@@ -86,7 +97,7 @@ static int check_sdcard(const char *name)
 
 int main(int argc, char *argv[])
 {
-	check_sdcard("sda");
+	check_sdcard("mmcblk");
 	return 0;
 
 	QApplication app(argc, argv);

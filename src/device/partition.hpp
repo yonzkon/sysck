@@ -2,6 +2,7 @@
 #define PARTITION_HPP
 
 #include "device.hpp"
+#include "mbr_sector.hpp"
 #include <string>
 #include <sstream>
 #include <fstream>
@@ -110,10 +111,17 @@ template<class T>
 struct recover_partition_by_utils {
 	static int recover(T &pt);
 
-	static int rebuild_table(std::string name)
+	static int rebuild_table(std::string name, struct mbr_sector *mbr)
 	{
-		name = "hello";
-		return 0;
+		std::string devfile = "/dev/" + name;
+		if (access(devfile.c_str(), F_OK) == -1)
+			return -1;
+
+		int fd = open(devfile.c_str(), O_RDWR);
+		if (fd == -1)
+			return -1;
+
+		return write(fd, (char*)mbr, sizeof(struct mbr_sector));
 	}
 
 	static int reread_table(std::string name)
