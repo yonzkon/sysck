@@ -19,6 +19,7 @@ private:
 
 public:
 	storage_disk(std::string name)
+		: name(name)
 	{
 		DetectPolicy<T>::detect(name, partitions);
 	}
@@ -31,17 +32,20 @@ public:
 		return partitions;
 	}
 
-	int rebuild_partition_table()
-	{
-		return 0;
-	}
-
 	int reread_partition_table()
 	{
-		return 0;
+		if (RecoverPolicy<T>::reread_table(this->name) == -1) {
+			return -1;
+		}
+		else {
+			DetectPolicy<T>::detect(name, partitions);
+			return 0;
+		}
+
 	}
 
 private:
+	std::string name;
 	container partitions;
 };
 

@@ -12,6 +12,7 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/sysmacros.h>
 #include <fcntl.h>
 
 namespace sysck {
@@ -37,7 +38,7 @@ template<class T>
 struct detect_partition_with_devfile {
 	typedef std::vector<T> Container;
 
-	static void detect(std::string name, Container &partitions)
+	static void detect(std::string &name, Container &partitions)
 	{
 		std::regex pattern(name);
 		std::ifstream ifpart("/proc/partitions");
@@ -66,10 +67,14 @@ struct detect_partition_with_devfile {
 	static void detect_extra(T &pt)
 	{
 		// check if has devfile
-		std::stringstream buffer;
-		buffer << "/dev/" << pt.name;
-		if (access(buffer.str().c_str(), F_OK) == -1) return;
-		pt.devfile = buffer.str();
+		std::string devfile = "/dev/" + pt.name;
+		if (access(devfile.c_str(), F_OK) == -1) {
+			if (mknod(pt.devfile.c_str(),
+					  S_IFBLK | S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP,
+					  makedev(pt.major, pt.minor)) == -1)
+				return;
+		}
+		pt.devfile = "/dev/" + pt.name;
 
 		// check path in sys
 		// TODO
@@ -95,6 +100,29 @@ template<class T>
 struct recover_partition_by_utils {
 	static int recover(T &pt);
 
+	static int rebuild_table(std::string name)
+	{
+		name = "hello";
+		return 0;
+	}
+
+	static int reread_table(std::string name)
+	{
+		std::string devfile = "/dev/" + name;
+		if (access(devfile.c_str(), F_OK) == -1)
+			return -1;
+
+		int fd = open(devfile.c_str(), O_RDWR);
+		if (fd == -1)
+			return -1;
+
+		int value;
+		if (ioctl(fd, BLKRRPART, &value) == -1)
+			return -1;
+
+		return 0;
+	}
+
 	static int fsck(T &pt)
 	{
 		if (!pt.is_available || pt.is_disk || pt.devfile.empty())
@@ -105,7 +133,7 @@ struct recover_partition_by_utils {
 		return system(cmd.str().c_str());
 	}
 
-	static int format(T &pt, format_type type)
+	static int format(T &pt, format_type type = FORMAT_FAT32)
 	{
 		if (!pt.is_available || pt.is_disk || pt.devfile.empty())
 			return -1;

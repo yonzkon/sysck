@@ -35,16 +35,17 @@ static int check_sdcard(const char *name)
 	auto partitions = sdcard->current_partitions();
 	print_partitions(partitions);
 
-	// check disk state
+	// check if disk is exist
 	if (partitions.size() == 0) {
 		cout << "[FATAL] " << name << " is not available." << endl;
 		return -1;
 	}
 
+	// check if disk is parted
 	if (partitions.size() == 1) {
 		cout << "[WARNING] " << name << " is not partitioned." << endl;
 
-		if (sdcard->rebuild_partition_table() == -1) {
+		if (sdcard->rebuild_table(name) == -1) {
 			cout << "[FATAL] " << "rebuild_partition_table failed." << endl;
 			return -1;
 		}
@@ -64,27 +65,23 @@ static int check_sdcard(const char *name)
 
 		partitions = sdcard->current_partitions();
 		for (auto &item : partitions) {
-			// TODO: not format disk
-			sdcard->format(item, sysck::FORMAT_FAT32);
+			if (!item.is_disk && item.is_available)
+				sdcard->format(item, sysck::FORMAT_FAT32);
 		}
 	}
 
-	// check partition state
-	if (partitions[0].devfile.empty()) {
-		cout << "[WARNING] " << name << " doesn't find at /dev. do mknod ..." << endl;
-		// TODO: mknod
-		if (system("mknod")) {
-			cout << "[FATAL] make node file of " << name << " at /dev failed." << endl;
-			return -1;
-		}
-	}
-
+	// check if disk and its first partition is available
 	if (!partitions[0].is_available || !partitions[1].is_available) {
 		cout << "[FATAL] " << name << " is physical broken, please change the SD card." << endl;
 		return -1;
 	}
 
-	return sdcard->fsck(partitions[1]);
+	// now we run fsck on every partition
+	for (auto &item : partitions) {
+		if (!item.is_disk && item.is_available && !item.is_mounted)
+			sdcard->fsck(item);
+	}
+	return 0;
 }
 
 int main(int argc, char *argv[])
