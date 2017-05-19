@@ -66,7 +66,7 @@ struct detect_partition_with_devfile {
 
 	static void detect_extra(T &pt)
 	{
-		// check if has devfile
+		// check devfile
 		std::string devfile = "/dev/" + pt.name;
 		if (access(devfile.c_str(), F_OK) == -1) {
 			if (mknod(pt.devfile.c_str(),
@@ -76,7 +76,7 @@ struct detect_partition_with_devfile {
 		}
 		pt.devfile = "/dev/" + pt.name;
 
-		// check path in sys
+		// check sysdir
 		// TODO
 
 		// check if is available & read low level state of disk
@@ -91,8 +91,18 @@ struct detect_partition_with_devfile {
 		pt.is_available = true;
 
 		// check if is mounted
-		// TODO
-		pt.is_mounted = true;
+		if (pt.is_disk) return;
+		std::regex pattern(pt.name);
+		std::ifstream ifpart("/proc/self/mounts");
+		while (!ifpart.eof()) {
+			char buffer[256];
+			ifpart.getline(buffer, 256);
+			if (regex_search(buffer, pattern)) {
+				pt.is_mounted = true;
+				break;
+			}
+		}
+		ifpart.close();
 	}
 };
 
