@@ -1,37 +1,60 @@
-#include <QApplication>
+#include "device/mmcblk.hpp"
 #include "ui_MainWindow.h"
-#include "checker/disk_checker.h"
+#include <QApplication>
 #include <iostream>
 #include <memory>
 
 using namespace std;
 
-static int test_sdcard_check(const char *name)
+static void print_partitions(typename sysck::mmcblk::container &partitions)
 {
-	unique_ptr<sysck::disk_checker> checker(new sysck::disk_checker(name));
-	auto partitions = checker->current_partitions();
-	checker->print_partition_table();
+	for (auto &item : partitions) {
+		std::cout << item.major << " ";
+		std::cout << item.minor << " ";
+		std::cout << item.name << " ";
+		std::cout << item.devfile<< " ";
+		std::cout << item.sysdir<< " ";
+		std::cout << item.is_available << " ";
+
+		std::cout << item.is_disk << " ";
+		std::cout << item.is_mounted << " ";
+
+		std::cout << item.blocks << " ";
+		std::cout << item.readonly << " ";
+		std::cout << item.size << " ";
+		std::cout << item.size64 << " ";
+		std::cout << item.sector_size << " ";
+		std::cout << item.block_size << " ";
+		std::cout << std::endl;
+	}
+}
+
+static int check_sdcard(const char *name)
+{
+	unique_ptr<sysck::mmcblk> sdcard(new sysck::mmcblk(name));
+	auto partitions = sdcard->current_partitions();
+	print_partitions(partitions);
 
 	// check disk state
-	if (!checker->is_exist()) {
-		cout << "[FATAL] " << name << " is not exist." << endl;
+	if (partitions.size() == 0) {
+		cout << "[FATAL] " << name << " is not available." << endl;
 		return -1;
 	}
 
-	if (!checker->is_parted()) {
+	if (partitions.size() == 1) {
 		cout << "[WARNING] " << name << " is not partitioned." << endl;
 
-		if (checker->rebuild_partition_table() == -1) {
+		if (sdcard->rebuild_partition_table() == -1) {
 			cout << "[FATAL] " << "rebuild_partition_table failed." << endl;
 			return -1;
 		}
 
-		if (checker->reread_partition_table() == -1) {
+		if (sdcard->reread_partition_table() == -1) {
 			cout << "[FATAL] " << "reread_partition_table failed." << endl;
 			return -1;
 		}
 
-		if (!checker->is_parted()) {
+		if (partitions.size() == 1) {
 			cout << "[FATAL] "
 				 << name
 				 << " is still not partitioned after rebuild_partition_table."
@@ -39,15 +62,15 @@ static int test_sdcard_check(const char *name)
 			return -1;
 		}
 
-		partitions = checker->current_partitions();
+		partitions = sdcard->current_partitions();
 		for (auto &item : partitions) {
 			// TODO: not format disk
-			checker->format_partition(item, sysck::disk_checker::FORMAT_FAT32);
+			sdcard->format(item, sysck::FORMAT_FAT32);
 		}
 	}
 
 	// check partition state
-	if (!partitions[0].has_devfile) {
+	if (partitions[0].devfile.empty()) {
 		cout << "[WARNING] " << name << " doesn't find at /dev. do mknod ..." << endl;
 		// TODO: mknod
 		if (system("mknod")) {
@@ -61,12 +84,13 @@ static int test_sdcard_check(const char *name)
 		return -1;
 	}
 
-	return checker->check_partition(partitions[1]);
+	return sdcard->fsck(partitions[1]);
 }
 
 int main(int argc, char *argv[])
 {
-	test_sdcard_check("sda");
+	check_sdcard("sda");
+	return 0;
 
 	QApplication app(argc, argv);
 
