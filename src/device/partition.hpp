@@ -10,11 +10,12 @@
 #include <regex>
 #include <unistd.h>
 #include <linux/fs.h>
+#include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
-#include <fcntl.h>
+#include <sys/wait.h>
 
 namespace sysck {
 
@@ -72,8 +73,10 @@ struct detect_partition_with_devfile {
 		if (access(devfile.c_str(), F_OK) == -1) {
 			if (mknod(pt.devfile.c_str(),
 					  S_IFBLK | S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP,
-					  makedev(pt.major, pt.minor)) == -1)
+					  makedev(pt.major, pt.minor)) == -1) {
+				perror("mknod");
 				return;
+			}
 		}
 		pt.devfile = "/dev/" + pt.name;
 
@@ -82,7 +85,10 @@ struct detect_partition_with_devfile {
 
 		// check if is available & read low level state of disk
 		int fd = open(pt.devfile.c_str(), O_RDWR);
-		if (fd == -1) return;
+		if (fd == -1) {
+			perror("open");
+			return;
+		}
 
 		if (ioctl(fd, BLKROGET, &pt.readonly) == -1) return;
 		if (ioctl(fd, BLKGETSIZE, &pt.size) == -1) return;
@@ -114,12 +120,16 @@ struct recover_partition_by_utils {
 	static int rebuild_table(std::string name, struct mbr *mbr)
 	{
 		std::string devfile = "/dev/" + name;
-		if (access(devfile.c_str(), F_OK) == -1)
+		if (access(devfile.c_str(), F_OK) == -1) {
+			perror("access");
 			return -1;
+		}
 
 		int fd = open(devfile.c_str(), O_RDWR);
-		if (fd == -1)
+		if (fd == -1) {
+			perror("open");
 			return -1;
+		}
 
 		if (sizeof(struct mbr) != write(fd, (char*)mbr, sizeof(struct mbr)))
 			return -1;
@@ -130,15 +140,21 @@ struct recover_partition_by_utils {
 	static int reread_table(std::string name)
 	{
 		std::string devfile = "/dev/" + name;
-		if (access(devfile.c_str(), F_OK) == -1)
+		if (access(devfile.c_str(), F_OK) == -1) {
+			perror("access");
 			return -1;
+		}
 
 		int fd = open(devfile.c_str(), O_RDWR);
-		if (fd == -1)
+		if (fd == -1) {
+			perror("open");
 			return -1;
+		}
 
-		if (ioctl(fd, BLKRRPART, NULL) == -1)
+		if (ioctl(fd, BLKRRPART, NULL) == -1) {
+			perror("ioctl");
 			return -1;
+		}
 
 		return 0;
 	}
@@ -148,9 +164,21 @@ struct recover_partition_by_utils {
 		if (!pt.is_available || pt.is_disk || pt.devfile.empty())
 			return -1;
 
-		std::stringstream cmd;
-		cmd << "fsck -y " << pt.devfile;
-		return system(cmd.str().c_str());
+		int pid = fork();
+		if (pid < 0) {
+			perror("fork");
+			return -1;
+		}
+
+		if (!pid) {
+			close(0);//close(1);close(2);
+			exit(execlp("fsck", "fsck", "-y", pt.devfile.c_str(), NULL));
+		}
+
+		// TODO: wait timeout in 5 minutes
+		int status;
+		wait(&status);
+		return status;
 	}
 
 	static int format(T &pt, format_type type = FORMAT_FAT32)
