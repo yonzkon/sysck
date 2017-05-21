@@ -40,7 +40,7 @@ struct mbr {
 } __attribute__ ((packed));
 
 extern inline
-void fba_to_chs(struct chs *chs, int fba)
+void fba_to_chs(struct chs *chs, unsigned int fba)
 {
 	chs->head = (fba % CYLINDER_SIZE) / 63;
 	chs->sector = (fba % CYLINDER_SIZE) % 63 + 1;

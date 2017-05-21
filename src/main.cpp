@@ -1,5 +1,5 @@
 #include "device/mmcblk.hpp"
-#include "device/mbr.hpp"
+#include "device/mbr.h"
 #include "ui_MainWindow.h"
 #include <QApplication>
 #include <iostream>
@@ -32,7 +32,6 @@ static void print_partitions(typename sysck::mmcblk::partition_container &partit
 
 static void make_sdcard_mbr(struct mbr *mbr, int total_sectors)
 {
-	// TODO: make sdcard mbr
 	memset(mbr, 0, sizeof(struct mbr));
 	mbr->disk_signature = DISK_SIGNATURE_MAGIC;
 	mbr->dpt[0].active = 0;

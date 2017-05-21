@@ -2,7 +2,7 @@
 #define PARTITION_HPP
 
 #include "device.hpp"
-#include "mbr.hpp"
+#include "mbr.h"
 #include <string>
 #include <sstream>
 #include <fstream>

@@ -5,11 +5,13 @@
 #include "storage_disk.hpp"
 
 namespace sysck {
-	typedef storage_disk<
-		partition,
-		detect_partition_with_devfile,
-		recover_partition_by_utils>
-	mmcblk;
+
+typedef storage_disk<
+	partition,
+	detect_partition_with_devfile,
+	recover_partition_by_utils>
+mmcblk;
+
 }
 
 #endif

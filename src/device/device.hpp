@@ -3,6 +3,8 @@
 
 #include <string>
 
+namespace sysck {
+
 struct device {
 	int major;
 	int minor;
@@ -11,5 +13,7 @@ struct device {
 	std::string sysdir;
 	bool is_available;
 };
+
+}
 
 #endif
