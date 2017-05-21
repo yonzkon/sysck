@@ -5,6 +5,12 @@
 extern "C" {
 #endif
 
+#define FS_LINUX 0x83
+#define FS_WIN95_FAT32_LBA 0xc
+#define DISK_SIGNATURE_MAGIC 0xcf4746fe
+#define MBR_TAG 0xaa55
+#define MBR_RESERVED 2048
+
 // cylinder start from 1 to 1024
 // head start from 1 to 255
 // sector start from 1 to 63

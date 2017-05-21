@@ -34,14 +34,14 @@ static void make_sdcard_mbr(struct mbr *mbr, int total_sectors)
 {
 	// TODO: make sdcard mbr
 	memset(mbr, 0, sizeof(struct mbr));
-	mbr->disk_signature = 0xcf4746fe;
+	mbr->disk_signature = DISK_SIGNATURE_MAGIC;
 	mbr->dpt[0].active = 0;
-	fba_to_chs(&mbr->dpt[0].start_sector, 2048);
-	mbr->dpt[0].fs_type = 0x83;
+	fba_to_chs(&mbr->dpt[0].start_sector, MBR_RESERVED);
+	mbr->dpt[0].fs_type = FS_LINUX;
 	fba_to_chs(&mbr->dpt[0].end_sector, total_sectors - 1);
-	mbr->dpt[0].first_lba = 2048;
-	mbr->dpt[0].sectors = total_sectors - 2048;
-	mbr->tag = 0xaa55;
+	mbr->dpt[0].first_lba = MBR_RESERVED;
+	mbr->dpt[0].sectors = total_sectors - MBR_RESERVED;
+	mbr->tag = MBR_TAG;
 }
 
 static int check_sdcard(const char *name)
