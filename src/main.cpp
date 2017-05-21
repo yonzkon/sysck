@@ -1,5 +1,5 @@
 #include "device/mmcblk.hpp"
-#include "device/mbr_sector.hpp"
+#include "device/mbr.hpp"
 #include "ui_MainWindow.h"
 #include <QApplication>
 #include <iostream>
@@ -30,12 +30,17 @@ static void print_partitions(typename sysck::mmcblk::partition_container &partit
 	}
 }
 
-static void make_sdcard_mbr(struct mbr_sector *mbr)
+static void make_sdcard_mbr(struct mbr *mbr, int total_sectors)
 {
 	// TODO: make sdcard mbr
+	memset(mbr, 0, sizeof(struct mbr));
+	mbr->dpt[0].active = 0;
+	fba_to_chs(&mbr->dpt[0].start_sector, 2048);
+	mbr->dpt[0].fs_type = 0x83;
+	fba_to_chs(&mbr->dpt[0].end_sector, total_sectors - 1);
+	mbr->dpt[0].first_lba = 2048;
+	mbr->dpt[0].sectors = total_sectors - 2048;
 	mbr->tag = 0xaa55;
-	mbr->dpt[0].flag = 0;
-	mbr->dpt[0].type = 0x83;
 }
 
 static int check_sdcard(const char *name)
@@ -54,8 +59,8 @@ static int check_sdcard(const char *name)
 	if (partitions.size() == 1) {
 		cout << "[WARNING] " << name << " is not partitioned." << endl;
 
-		struct mbr_sector mbr;
-		make_sdcard_mbr(&mbr);
+		struct mbr mbr;
+		make_sdcard_mbr(&mbr, partitions[0].size);
 		if (sdcard->rebuild_table(name, &mbr) == -1) {
 			cout << "[FATAL] " << "rebuild_partition_table failed." << endl;
 			return -1;
