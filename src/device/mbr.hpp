@@ -11,9 +11,9 @@ extern "C" {
 #define CYLINDER_SIZE (255 * 63)
 
 struct chs {
-	unsigned char start_head;
-	unsigned short start_sector:6;
-	unsigned short start_cylinder:10;
+	unsigned char head;
+	unsigned short sector:6;
+	unsigned short cylinder:10;
 } __attribute__ ((packed));
 
 struct dpt {
@@ -36,9 +36,9 @@ struct mbr {
 extern inline
 void fba_to_chs(struct chs *chs, int fba)
 {
-	chs->start_head = (fba % CYLINDER_SIZE) / 63;
-	chs->start_sector = (fba % CYLINDER_SIZE) % 63 + 1;
-	chs->start_cylinder = fba / CYLINDER_SIZE;
+	chs->head = (fba % CYLINDER_SIZE) / 63;
+	chs->sector = (fba % CYLINDER_SIZE) % 63 + 1;
+	chs->cylinder = fba / CYLINDER_SIZE;
 }
 
 #ifdef __cplusplus
