@@ -61,14 +61,13 @@ static int check_sdcard(const char *name)
 
 		struct mbr mbr;
 		make_sdcard_mbr(&mbr, partitions[0].size);
-		cout << "[INFO] rebuild partition table on " << name << endl;
-		if (sdcard->rebuild_table(name, &mbr) == -1) {
+		if (sdcard->rebuild_table(name, &mbr) != 0) {
 			cout << "[FATAL] " << "rebuild partition table " << name << " failed." << endl;
 			return -1;
 		}
 		cout << "[INFO] rebuild partition table on " << name << " success." << endl;
 
-		if (sdcard->reread_partition_table() == -1) {
+		if (sdcard->reread_partition_table() != 0) {
 			cout << "[FATAL] " << "reread partition table failed." << endl;
 			return -1;
 		}
@@ -84,8 +83,12 @@ static int check_sdcard(const char *name)
 
 		partitions = sdcard->current_partitions();
 		for (auto &item : partitions) {
-			if (!item.is_disk && item.is_available)
-				sdcard->format(item, sysck::FORMAT_FAT32);
+			if (item.is_disk || !item.is_available)
+				continue;
+			if (sdcard->format(item, sysck::FORMAT_FAT32) != 0) {
+				cout << "[FATAL] " << "format " << item.name << " failed." << endl;
+				return -1;
+			}
 		}
 	}
 
