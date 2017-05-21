@@ -121,7 +121,10 @@ struct recover_partition_by_utils {
 		if (fd == -1)
 			return -1;
 
-		return write(fd, (char*)mbr, sizeof(struct mbr));
+		if (sizeof(struct mbr) != write(fd, (char*)mbr, sizeof(struct mbr)))
+			return -1;
+		else
+			return 0;
 	}
 
 	static int reread_table(std::string name)

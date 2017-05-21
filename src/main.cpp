@@ -34,6 +34,7 @@ static void make_sdcard_mbr(struct mbr *mbr, int total_sectors)
 {
 	// TODO: make sdcard mbr
 	memset(mbr, 0, sizeof(struct mbr));
+	mbr->disk_signature = 0xcf4746fe;
 	mbr->dpt[0].active = 0;
 	fba_to_chs(&mbr->dpt[0].start_sector, 2048);
 	mbr->dpt[0].fs_type = 0x83;
@@ -61,15 +62,18 @@ static int check_sdcard(const char *name)
 
 		struct mbr mbr;
 		make_sdcard_mbr(&mbr, partitions[0].size);
+		cout << "[INFO] rebuild partition table on " << name << endl;
 		if (sdcard->rebuild_table(name, &mbr) == -1) {
-			cout << "[FATAL] " << "rebuild_partition_table failed." << endl;
+			cout << "[FATAL] " << "rebuild partition table " << name << " failed." << endl;
 			return -1;
 		}
+		cout << "[INFO] rebuild partition table on " << name << " success." << endl;
 
 		if (sdcard->reread_partition_table() == -1) {
-			cout << "[FATAL] " << "reread_partition_table failed." << endl;
+			cout << "[FATAL] " << "reread partition table failed." << endl;
 			return -1;
 		}
+		partitions = sdcard->current_partitions();
 
 		if (partitions.size() == 1) {
 			cout << "[FATAL] "

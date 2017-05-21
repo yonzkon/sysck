@@ -11,27 +11,27 @@ extern "C" {
 #define CYLINDER_SIZE (255 * 63)
 
 struct chs {
-	char start_head;
-	short start_sector:6;
-	short start_cylinder:10;
-} __attribute__ ((aligned(1)));
+	unsigned char start_head;
+	unsigned short start_sector:6;
+	unsigned short start_cylinder:10;
+} __attribute__ ((packed));
 
 struct dpt {
-	char active; /* 00 -> inactive; 80 -> active */
+	unsigned char active; /* 00 -> inactive; 80 -> active */
 	struct chs start_sector;
-	char fs_type;
+	unsigned char fs_type;
 	struct chs end_sector;
-	int first_lba;
-	int sectors;
-} __attribute__ ((aligned(1)));
+	unsigned int first_lba;
+	unsigned int sectors;
+} __attribute__ ((packed));
 
 struct mbr {
-	char code[440];
-	int disk_signature;
-	int unused;
+	unsigned char code[440];
+	unsigned int disk_signature;
+	unsigned short unused;
 	struct dpt dpt[4];
-	short tag;
-} __attribute__ ((aligned(1)));
+	unsigned short tag;
+} __attribute__ ((packed));
 
 extern inline
 void fba_to_chs(struct chs *chs, int fba)
