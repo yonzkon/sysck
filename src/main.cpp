@@ -1,3 +1,4 @@
+#include "config.h"
 #include "device/mmcblk.hpp"
 #include "device/mbr.h"
 #include "ui_MainWindow.h"
@@ -6,6 +7,8 @@
 #include <memory>
 
 using namespace std;
+
+shared_ptr<sysck::config> conf;
 
 static void print_partitions(typename sysck::mmcblk::partition_container &partitions)
 {
@@ -85,7 +88,7 @@ static int check_sdcard(const char *name)
 		for (auto &item : partitions) {
 			if (item.is_disk || !item.is_available)
 				continue;
-			if (sdcard->format(item, sysck::FORMAT_FAT32) != 0) {
+			if (sdcard->format(item, conf->format_type) != 0) {
 				cout << "[FATAL] " << "format " << item.name << " failed." << endl;
 				return -1;
 			}
@@ -108,7 +111,10 @@ static int check_sdcard(const char *name)
 
 int main(int argc, char *argv[])
 {
-	check_sdcard("mmcblk");
+	conf = make_shared<sysck::config>(argc, argv);
+
+	for (auto &item : conf->disks)
+		check_sdcard(item.c_str());
 	return 0;
 
 	QApplication app(argc, argv);

@@ -19,11 +19,6 @@
 
 namespace sysck {
 
-enum format_type {
-	FORMAT_FAT32,
-	FORMAT_EXT2,
-};
-
 struct partition : public device {
 	bool is_disk;
 	bool is_mounted;
@@ -38,9 +33,9 @@ struct partition : public device {
 
 template<class T>
 struct detect_partition_with_devfile {
-	typedef std::vector<T> PartitionContainer;
+	typedef std::vector<T> partition_container;
 
-	static void detect(std::string &name, PartitionContainer &partitions)
+	static void detect(std::string &name, partition_container &partitions)
 	{
 		std::regex pattern(name);
 		std::ifstream ifpart("/proc/partitions");
@@ -181,26 +176,16 @@ struct recover_partition_by_utils {
 		return status;
 	}
 
-	static int format(T &pt, format_type type = FORMAT_FAT32)
+	static int format(T &pt, std::string type)
 	{
 		if (!pt.is_available || pt.is_disk || pt.devfile.empty())
 			return -1;
 
+		// FIXME: mkfs may prompt 'Proceed anyway? (y,n)'
+		// while the disk already contains a file system.
+		// I'm not sure if 'echo y' will be suitable in any circumstance.
 		std::stringstream cmd;
-
-		switch (type) {
-		case FORMAT_EXT2:
-			cmd << "mkfs -t ext2 " << pt.devfile;
-			break;
-
-		case FORMAT_FAT32:
-			cmd << "mkfs -t vfat " << pt.devfile;
-			break;
-
-		default:
-			return -1;
-		}
-
+		cmd << "echo y| mkfs -t " << type << " " << pt.devfile;
 		return system(cmd.str().c_str());
 	}
 };

@@ -11,7 +11,7 @@ template <class T,
 class storage_disk : public DetectPolicy<T>,
 					 public RecoverPolicy<T> {
 public:
-	typedef typename DetectPolicy<T>::PartitionContainer partition_container;
+	typedef typename DetectPolicy<T>::partition_container partition_container;
 
 private:
 	storage_disk(storage_disk &rhs);
