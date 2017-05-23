@@ -9,7 +9,7 @@ static const char options[] =
 ;
 
 sysck::config::config(int argc, char *argv[])
-	: format_type("fat32")
+	: format_type("vfat")
 {
 	config_from_arg(argc, argv);
 }

@@ -79,7 +79,7 @@ static int check_sdcard(const char *name)
 		if (partitions.size() == 1) {
 			cout << "[FATAL] "
 				 << name
-				 << " is still not partitioned after rebuild_partition_table."
+				 << " is still not partitioned after rebuild partition table."
 				 << endl;
 			return -1;
 		}

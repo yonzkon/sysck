@@ -170,10 +170,29 @@ struct recover_partition_by_utils {
 			exit(execlp("fsck", "fsck", "-y", pt.devfile.c_str(), NULL));
 		}
 
-		// TODO: wait timeout in 5 minutes
+		// waitpid, to timeout in 5 minutes
 		int status;
-		wait(&status);
-		return status;
+		int sleep_interval = 1;
+		int times = 0, max_times = 60 * 5 / sleep_interval;
+		while (times < max_times) {
+			sleep(sleep_interval);
+			if (waitpid(pid, &status, WNOHANG) == -1) {
+				perror("waitpid");
+				return -1;
+			}
+
+			if (WIFSIGNALED(status))
+				return -1;
+
+			if (WIFEXITED(status))
+				return WEXITSTATUS(status);
+
+			times++;
+		}
+
+		kill(pid, SIGTERM);
+		waitpid(pid, &status, 0);
+		return -1;
 	}
 
 	static int format(T &pt, std::string type)
