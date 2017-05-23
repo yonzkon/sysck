@@ -36,12 +36,10 @@ public:
 	{
 		if (RecoverPolicy<T>::reread_table(this->name) == -1) {
 			return -1;
-		}
-		else {
+		} else {
 			DetectPolicy<T>::detect(name, partitions);
 			return 0;
 		}
-
 	}
 
 private:

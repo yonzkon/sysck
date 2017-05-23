@@ -1,8 +1,6 @@
 #include "config.h"
 #include "device/mmcblk.hpp"
 #include "device/mbr.h"
-#include "ui_MainWindow.h"
-#include <QApplication>
 #include <iostream>
 #include <memory>
 
@@ -115,14 +113,6 @@ int main(int argc, char *argv[])
 
 	for (auto &item : conf->disks)
 		check_sdcard(item.c_str());
+
 	return 0;
-
-	QApplication app(argc, argv);
-
-	QMainWindow *window = new QMainWindow();
-	Ui_MainWindow ui;// = new Ui_MainWindow();
-	ui.setupUi(window);
-	window->show();
-
-	return app.exec();
 }

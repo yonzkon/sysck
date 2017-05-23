@@ -1,5 +1,7 @@
 #include "config.h"
 #include <cstring>
+#include <cstdlib>
+#include <cstdio>
 #include <iostream>
 
 static const char options[] =
@@ -18,7 +20,7 @@ int sysck::config::config_from_arg(int argc, char *argv[])
 {
 	//int index_args = 0;
 
-	for(int i = 1; i < argc; i++) {
+	for (int i = 1; i < argc; i++) {
 		char *z = argv[i];
 
 		//// dbfiles: test_db first, result_db second
@@ -37,7 +39,7 @@ int sysck::config::config_from_arg(int argc, char *argv[])
 		//}
 
 		// options which start with '-'
-		if(strcmp(z, "-h") == 0) {
+		if (strcmp(z, "-h") == 0) {
 			usage(1, argv[0]);
 		} else if (strcmp(z, "-t") == 0) {
 			i++;
