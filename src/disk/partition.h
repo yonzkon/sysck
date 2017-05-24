@@ -1,7 +1,7 @@
-#ifndef PARTITION_HPP
-#define PARTITION_HPP
+#ifndef PARTITION_H
+#define PARTITION_H
 
-#include "device.hpp"
+#include "device.h"
 #include "mbr.h"
 #include <string>
 #include <sstream>

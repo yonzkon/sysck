@@ -1,6 +1,6 @@
 #include "config.h"
-#include "device/mmcblk.hpp"
-#include "device/mbr.h"
+#include "disk/mmcblk.h"
+#include "disk/mbr.h"
 #include <iostream>
 #include <memory>
 
@@ -52,7 +52,7 @@ static int check_sdcard(const char *name)
 
 	// check if disk is exist
 	if (partitions.size() == 0) {
-		cout << "[FATAL] " << name << " is not available." << endl;
+		cout << "[FATAL] " << name << " is not existed." << endl;
 		return -1;
 	}
 

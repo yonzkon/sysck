@@ -1,12 +1,12 @@
-#ifndef MMCBLK_HPP
-#define MMCBLK_HPP
+#ifndef MMCBLK_H
+#define MMCBLK_H
 
-#include "partition.hpp"
-#include "storage_disk.hpp"
+#include "partition.h"
+#include "disk.h"
 
 namespace sysck {
 
-typedef storage_disk<
+typedef disk<
 	partition,
 	detect_partition_with_devfile,
 	recover_partition_by_utils>
