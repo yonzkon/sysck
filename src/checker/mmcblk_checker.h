@@ -23,14 +23,18 @@ public:
 	virtual ~mmcblk_checker();
 
 public:
-	int check_exist();
-	int check_parted(std::string format_type);
-	int check_available();
-	int check_fsck();
+	bool is_exist();
+	bool is_parted();
+	bool is_available();
+
+	int do_part(std::string format_type);
+	int do_fsck();
+
 	void print_partitions();
 
-private:
+public:
 	std::string name;
+private:
 	mmcblk* blk;
 };
 

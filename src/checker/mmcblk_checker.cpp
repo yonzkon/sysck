@@ -29,15 +29,36 @@ mmcblk_checker::~mmcblk_checker()
 	delete blk;
 }
 
-int mmcblk_checker::check_exist()
+bool mmcblk_checker::is_exist()
 {
 	if (blk->current_partitions().size() == 0)
-		return -1;
+		return false;
 	else
-		return 0;
+		return true;
 }
 
-int mmcblk_checker::check_parted(std::string format_type)
+bool mmcblk_checker::is_parted()
+{
+	if (blk->current_partitions().size() < 2)
+		return false;
+	else
+		return true;
+}
+
+bool mmcblk_checker::is_available()
+{
+	auto &partitions = blk->current_partitions();
+
+	if (partitions.size() < 2)
+		return false;
+
+	if (!partitions[0].is_available || !partitions[1].is_available)
+		return false;
+
+	return true;
+}
+
+int mmcblk_checker::do_part(std::string format_type)
 {
 	auto &partitions = blk->current_partitions();
 
@@ -81,26 +102,14 @@ int mmcblk_checker::check_parted(std::string format_type)
 	return 0;
 }
 
-int mmcblk_checker::check_available()
-{
-	auto &partitions = blk->current_partitions();
-
-	if (partitions.size() < 2)
-		return -1;
-
-	if (!partitions[0].is_available || !partitions[1].is_available) {
-		cout << "[FATAL] " << name << " is physical broken, please change the SD card." << endl;
-		return -1;
-	}
-
-	return 0;
-}
-
-int mmcblk_checker::check_fsck()
+int mmcblk_checker::do_fsck()
 {
 	for (auto item : blk->current_partitions()) {
-		if (!item.is_disk && item.is_available && !item.is_mounted)
-			blk->fsck(item);
+		if (!item.is_disk && item.is_available && !item.is_mounted) {
+			int rc;
+			if ((rc = blk->fsck(item)) != 0)
+				return rc;
+		}
 	}
 
 	return 0;
