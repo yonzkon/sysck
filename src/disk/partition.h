@@ -26,7 +26,7 @@ struct partition : public device {
 	int blocks;   /* not used */
 	int readonly; /* 0 = read-write */
 	long size;
-	long size64;
+	size_t size64;
 	int sector_size;
 	int block_size;
 };
@@ -204,7 +204,7 @@ struct recover_partition_by_utils {
 		// while the disk already contains a file system.
 		// I'm not sure if 'echo y' will be suitable in any circumstance.
 		std::stringstream cmd;
-		cmd << "echo y| mkfs -t " << type << " " << pt.devfile;
+		cmd << "echo y| mkfs." << type << " " << pt.devfile;
 		return system(cmd.str().c_str());
 	}
 };

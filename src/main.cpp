@@ -7,11 +7,12 @@
 
 int main(int argc, char *argv[])
 {
+	QApplication a(argc, argv);
 #ifdef QWS
 	QWSServer::setBackground(QColor(0,0,0,0));
+	QWSServer::setCursorVisible(false);
 #endif
 
-	QApplication a(argc, argv);
 	MainWindow w;
 	w.show();
 

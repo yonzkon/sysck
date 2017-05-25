@@ -31,7 +31,7 @@ void MainWindow::on_check_state(QString state)
 
 void MainWindow::on_check_error(QString errmsg)
 {
-	QMessageBox msgbox(QMessageBox::Question, NULL, errmsg + "\npress No reboot the system",
+	QMessageBox msgbox(QMessageBox::Question, NULL, errmsg + "\npress No to reboot the system",
 					   QMessageBox::Yes | QMessageBox::No);
 
 	if (msgbox.exec() == QMessageBox::Yes) {

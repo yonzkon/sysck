@@ -13,8 +13,9 @@ void backend::run()
 {
 	for (auto &item : conf->disks) {
 		sysck::mmcblk_checker checker(item.c_str());
+		checker.print_partitions();
 
-		QString name = "disk [" + QString(item.c_str()) + "]";
+		QString name = "[" + QString(item.c_str()) + "]";
 
 		emit check_state("check if " + name + " exists");
 		if (!checker.is_exist()) {
@@ -36,6 +37,7 @@ void backend::run()
 				emit check_fatal("do partition on" + name + " failed");
 				return;
 			}
+			checker.print_partitions();
 		}
 
 		if (!checker.is_available()) {
@@ -71,12 +73,16 @@ void backend::run()
 			rc = system("mount /dev/mmcblk0p1 /mnt/sd");
 			if (rc == 0)  {
 				system("mkdir -p /mnt/sd/rtx");
-				system("mv /home/terminal.db* /mnt/sd/rtx");
+				system("cp -a /home/terminal.db* /mnt/sd/rtx");
+				system("rm -f /home/terminal.db*");
 				system("umount /dev/mmcblk0p1");
 			}
 		}
-		emit check_finish();
 	}
+
+	emit check_state("check finished");
+	sleep(1);
+	emit check_finish();
 }
 
 bool backend::wait_check_result()
