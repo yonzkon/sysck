@@ -7,7 +7,6 @@
 #include <sstream>
 #include <fstream>
 #include <vector>
-#include <regex>
 #include <unistd.h>
 #include <linux/fs.h>
 #include <fcntl.h>
@@ -37,7 +36,6 @@ struct detect_partition_with_devfile {
 
 	static void detect(std::string &name, partition_container &partitions)
 	{
-		std::regex pattern(name);
 		std::ifstream ifpart("/proc/partitions");
 
 		partitions.clear();
@@ -45,8 +43,12 @@ struct detect_partition_with_devfile {
 		while (!ifpart.eof()) {
 			char buffer[256];
 			ifpart.getline(buffer, 256);
-			if (regex_search(buffer, pattern)) {
-				T part = {};
+			if (strstr(buffer, name.c_str()) != NULL) {
+				T part;// = {};
+				part.is_available = false;
+				part.is_disk = false;
+				part.is_mounted = false;
+
 				std::stringstream(buffer) >> part.major
 										  >> part.minor
 										  >> part.blocks
@@ -94,12 +96,11 @@ struct detect_partition_with_devfile {
 
 		// check if is mounted
 		if (pt.is_disk) return;
-		std::regex pattern(pt.name);
 		std::ifstream ifpart("/proc/self/mounts");
 		while (!ifpart.eof()) {
 			char buffer[256];
 			ifpart.getline(buffer, 256);
-			if (regex_search(buffer, pattern)) {
+			if (strstr(buffer, pt.name.c_str()) != NULL) {
 				pt.is_mounted = true;
 				break;
 			}
@@ -181,8 +182,8 @@ struct recover_partition_by_utils {
 				return -1;
 			}
 
-			if (WIFSIGNALED(status))
-				return -1;
+			//if (WIFSIGNALED(status))
+			//	return -1;
 
 			if (WIFEXITED(status))
 				return WEXITSTATUS(status);

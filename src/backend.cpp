@@ -11,11 +11,12 @@ backend::backend(int argc, char *argv[], QObject *parent)
 
 void backend::run()
 {
-	for (auto &item : conf->disks) {
-		sysck::mmcblk_checker checker(item.c_str());
+	for (std::vector<std::string>::iterator iter = conf->disks.begin();
+			iter != conf->disks.end(); ++iter) {
+		sysck::mmcblk_checker checker(iter->c_str());
 		checker.print_partitions();
 
-		QString name = "[" + QString(item.c_str()) + "]";
+		QString name = "[" + QString(iter->c_str()) + "]";
 
 		emit check_state("check if " + name + " exists");
 		if (!checker.is_exist()) {

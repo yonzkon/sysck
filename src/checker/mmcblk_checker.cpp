@@ -47,7 +47,7 @@ bool mmcblk_checker::is_parted()
 
 bool mmcblk_checker::is_available()
 {
-	auto &partitions = blk->current_partitions();
+	const mmcblk::partition_container &partitions = blk->current_partitions();
 
 	if (partitions.size() < 2)
 		return false;
@@ -60,7 +60,7 @@ bool mmcblk_checker::is_available()
 
 int mmcblk_checker::do_part(std::string format_type)
 {
-	auto &partitions = blk->current_partitions();
+	const mmcblk::partition_container &partitions = blk->current_partitions();
 
 	if (partitions.size() == 0)
 		return -1;
@@ -89,11 +89,12 @@ int mmcblk_checker::do_part(std::string format_type)
 			return -1;
 		}
 
-		for (auto item : partitions) {
-			if (item.is_disk || !item.is_available)
+		for (size_t i = 0; i < partitions.size(); i++) {
+			if (partitions[i].is_disk || !partitions[i].is_available)
 				continue;
-			if (blk->format(item, format_type) != 0) {
-				cout << "[FATAL] " << "format " << item.name << " failed." << endl;
+			partition p = partitions[i];
+			if (blk->format(p, format_type) != 0) {
+				cout << "[FATAL] " << "format " << partitions[i].name << " failed." << endl;
 				return -1;
 			}
 		}
@@ -104,10 +105,13 @@ int mmcblk_checker::do_part(std::string format_type)
 
 int mmcblk_checker::do_fsck()
 {
-	for (auto item : blk->current_partitions()) {
-		if (!item.is_disk && item.is_available && !item.is_mounted) {
+	const mmcblk::partition_container &partitions = blk->current_partitions();
+
+	for (size_t i = 0; i < partitions.size(); i++) {
+		if (!partitions[i].is_disk && partitions[i].is_available && !partitions[i].is_mounted) {
 			int rc;
-			if ((rc = blk->fsck(item)) != 0)
+			partition p = partitions[i];
+			if ((rc = blk->fsck(p)) != 0)
 				return rc;
 		}
 	}
@@ -117,23 +121,25 @@ int mmcblk_checker::do_fsck()
 
 void mmcblk_checker::print_partitions()
 {
-	for (auto &item : blk->current_partitions()) {
-		cout << item.major << " ";
-		cout << item.minor << " ";
-		cout << item.name << " ";
-		cout << item.devfile<< " ";
-		cout << item.sysdir<< " ";
-		cout << item.is_available << " ";
+	const mmcblk::partition_container &partitions = blk->current_partitions();
 
-		cout << item.is_disk << " ";
-		cout << item.is_mounted << " ";
+	for (size_t i = 0; i < partitions.size(); i++) {
+		cout << partitions[i].major << " ";
+		cout << partitions[i].minor << " ";
+		cout << partitions[i].name << " ";
+		cout << partitions[i].devfile<< " ";
+		cout << partitions[i].sysdir<< " ";
+		cout << partitions[i].is_available << " ";
 
-		cout << item.blocks << " ";
-		cout << item.readonly << " ";
-		cout << item.size << " ";
-		cout << item.size64 << " ";
-		cout << item.sector_size << " ";
-		cout << item.block_size << " ";
+		cout << partitions[i].is_disk << " ";
+		cout << partitions[i].is_mounted << " ";
+
+		cout << partitions[i].blocks << " ";
+		cout << partitions[i].readonly << " ";
+		cout << partitions[i].size << " ";
+		cout << partitions[i].size64 << " ";
+		cout << partitions[i].sector_size << " ";
+		cout << partitions[i].block_size << " ";
 		cout << endl;
 	}
 }
