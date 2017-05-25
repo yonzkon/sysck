@@ -6,7 +6,7 @@ int main(int argc, char *argv[])
 {
 	QApplication a(argc, argv);
 	MainWindow w;
-	w.showFullScreen();
+	w.show();
 
 	backend bk(argc, argv);
 	bk.connect(&bk, SIGNAL(check_state(QString)), &w, SLOT(on_check_state(QString)));

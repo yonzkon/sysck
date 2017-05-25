@@ -8,6 +8,13 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui(new Ui::MainWindow)
 {
 	ui->setupUi(this);
+	this->setAttribute(Qt::WA_TranslucentBackground, true);
+	this->setWindowFlags(Qt::CustomizeWindowHint);
+	this->setGeometry(0, 0, 300, 480);
+
+	QPalette pal = ui->textBrowser->palette();
+	pal.setBrush(QPalette::Base, QBrush(Qt::NoBrush));
+	ui->textBrowser->setPalette(pal);
 }
 
 MainWindow::~MainWindow()
@@ -22,7 +29,7 @@ void MainWindow::on_check_state(QString state)
 
 void MainWindow::on_check_error(QString errmsg)
 {
-	QMessageBox msgbox(QMessageBox::Question, NULL, errmsg + "\n press No reboot the system",
+	QMessageBox msgbox(QMessageBox::Question, NULL, errmsg + "\npress No reboot the system",
 					   QMessageBox::Yes | QMessageBox::No);
 
 	if (msgbox.exec() == QMessageBox::Yes) {
@@ -37,7 +44,7 @@ void MainWindow::on_check_error(QString errmsg)
 void MainWindow::on_check_fatal(QString errmsg)
 {
 	QMessageBox msgbox;
-	msgbox.setText(errmsg + "\n press OK to reboot the system");
+	msgbox.setText(errmsg + "\npress OK to reboot the system");
 	msgbox.exec();
 
 	system("reboot -f");

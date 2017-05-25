@@ -51,7 +51,11 @@ void backend::run()
 			if (!wait_check_result())
 				return;
 
-			system("cp -a /mnt/sd/rtx/terminal.db* /home");
+			int rc = system("mount /dev/mmcblk0p1 /mnt/sd");
+			if (rc == 0)  {
+				system("cp -a /mnt/sd/rtx/terminal.db* /home");
+				system("umount /dev/mmcblk0p1");
+			}
 
 			emit check_state("do partition on " + name);
 			if (checker.do_part(conf->format_type) == -1) {
@@ -64,8 +68,12 @@ void backend::run()
 				return;
 			}
 
-			system("mkdir -p /mnt/sd/rtx");
-			system("mv /home/terminal.db* /mnt/sd/rtx");
+			rc = system("mount /dev/mmcblk0p1 /mnt/sd");
+			if (rc == 0)  {
+				system("mkdir -p /mnt/sd/rtx");
+				system("mv /home/terminal.db* /mnt/sd/rtx");
+				system("umount /dev/mmcblk0p1");
+			}
 		}
 		emit check_finish();
 	}
