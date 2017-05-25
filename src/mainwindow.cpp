@@ -12,10 +12,11 @@ MainWindow::MainWindow(QWidget *parent) :
 	this->setWindowFlags(Qt::FramelessWindowHint);
 	this->setGeometry(0, 0, 300, 480);
 
-	//QPalette pal = ui->textBrowser->palette();
+	QPalette pal = ui->textBrowser->palette();
 	//pal.setBrush(QPalette::Base, QBrush(Qt::NoBrush));
-	//pal.setColor(QPalette::Text, Qt::white);
-	//ui->textBrowser->setPalette(pal);
+	pal.setBrush(QPalette::Base, Qt::black);
+	pal.setColor(QPalette::Text, Qt::white);
+	ui->textBrowser->setPalette(pal);
 }
 
 MainWindow::~MainWindow()
