@@ -1,9 +1,16 @@
 #include "mainwindow.h"
 #include <QApplication>
+#ifdef QWS
+#include <QWSServer>
+#endif
 #include "backend.h"
 
 int main(int argc, char *argv[])
 {
+#ifdef QWS
+	QWSServer::setBackground(QColor(0,0,0,0));
+#endif
+
 	QApplication a(argc, argv);
 	MainWindow w;
 	w.show();

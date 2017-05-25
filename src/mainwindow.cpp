@@ -9,12 +9,13 @@ MainWindow::MainWindow(QWidget *parent) :
 {
 	ui->setupUi(this);
 	this->setAttribute(Qt::WA_TranslucentBackground, true);
-	this->setWindowFlags(Qt::CustomizeWindowHint);
+	this->setWindowFlags(Qt::FramelessWindowHint);
 	this->setGeometry(0, 0, 300, 480);
 
-	QPalette pal = ui->textBrowser->palette();
-	pal.setBrush(QPalette::Base, QBrush(Qt::NoBrush));
-	ui->textBrowser->setPalette(pal);
+	//QPalette pal = ui->textBrowser->palette();
+	//pal.setBrush(QPalette::Base, QBrush(Qt::NoBrush));
+	//pal.setColor(QPalette::Text, Qt::white);
+	//ui->textBrowser->setPalette(pal);
 }
 
 MainWindow::~MainWindow()
