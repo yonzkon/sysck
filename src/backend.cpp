@@ -47,18 +47,12 @@ void backend::run()
 		}
 
 		emit check_state("do fsck on " + name);
-		if (checker.do_fsck() != 0) {
+		if (checker.do_fsck(conf->fsck_timeout) != 0) {
 			emit check_state("do check on " + name + " failed");
 			emit check_error(name + " is damaged, should we re-partition on it?");
 
 			if (!wait_check_result())
 				return;
-
-			int rc = system("mount /dev/mmcblk0p1 /mnt/sd");
-			if (rc == 0)  {
-				system("cp -a /mnt/sd/rtx/terminal.db* /home");
-				system("umount /dev/mmcblk0p1");
-			}
 
 			emit check_state("do partition on " + name);
 			if (checker.do_part(conf->format_type) == -1) {
@@ -70,19 +64,10 @@ void backend::run()
 				emit check_fatal(name + " isn't available");
 				return;
 			}
-
-			rc = system("mount /dev/mmcblk0p1 /mnt/sd");
-			if (rc == 0)  {
-				system("mkdir -p /mnt/sd/rtx");
-				system("cp -a /home/terminal.db* /mnt/sd/rtx");
-				system("rm -f /home/terminal.db*");
-				system("umount /dev/mmcblk0p1");
-			}
 		}
 	}
 
 	emit check_state("check finished");
-	sleep(1);
 	emit check_finish();
 }
 

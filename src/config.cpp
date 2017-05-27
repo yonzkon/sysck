@@ -7,11 +7,13 @@
 static const char options[] =
 "   -d                   specify disks to check\n"
 "   -t                   specify format type while mkfs [default: vfat]\n"
+"   -fsck-timeout        specify fsck-timeout [default: 300 (seconds)]\n"
 "   -h                   show this message\n"
 ;
 
 sysck::config::config(int argc, char *argv[])
 	: format_type("vfat")
+	, fsck_timeout(300)
 {
 	config_from_arg(argc, argv);
 }
@@ -55,6 +57,13 @@ int sysck::config::config_from_arg(int argc, char *argv[])
 				return 1;
 			}
 			this->disks.push_back(std::string(argv[i]));
+		} else if (strcmp(z, "-fsck-timeout") == 0) {
+			i++;
+			if (i >= argc || argv[i][0] == '-') {
+				std::cout << "[WARNING] missing argument for option " << z << std::endl;
+				return 1;
+			}
+			this->fsck_timeout = atoi(argv[i]);
 		} else {
 			std::cout << "[WARNING] unknown option " << z
 					  << ", use -h for a list of options."

@@ -17,6 +17,7 @@ public:
 public:
 	std::string format_type;
 	std::vector<std::string> disks;
+	int fsck_timeout;
 };
 
 }

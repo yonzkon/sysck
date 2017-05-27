@@ -87,11 +87,32 @@ struct detect_partition_with_devfile {
 			return;
 		}
 
-		if (ioctl(fd, BLKROGET, &pt.readonly) == -1) return;
-		if (ioctl(fd, BLKGETSIZE, &pt.size) == -1) return;
-		if (ioctl(fd, BLKGETSIZE64, &pt.size64) == -1) return;
-		if (ioctl(fd, BLKSSZGET, &pt.sector_size) == -1) return;
-		if (ioctl(fd, BLKBSZGET, &pt.block_size) == -1) return;
+		if (ioctl(fd, BLKROGET, &pt.readonly) == -1) {
+			perror("ioctl");
+			close(fd);
+			return;
+		}
+		if (ioctl(fd, BLKGETSIZE, &pt.size) == -1) {
+			perror("ioctl");
+			close(fd);
+			return;
+		}
+		if (ioctl(fd, BLKGETSIZE64, &pt.size64) == -1) {
+			perror("ioctl");
+			close(fd);
+			return;
+		}
+		if (ioctl(fd, BLKSSZGET, &pt.sector_size) == -1) {
+			perror("ioctl");
+			close(fd);
+			return;
+		}
+		if (ioctl(fd, BLKBSZGET, &pt.block_size) == -1) {
+			perror("ioctl");
+			close(fd);
+			return;
+		}
+		close(fd);
 		pt.is_available = true;
 
 		// check if is mounted
@@ -127,10 +148,13 @@ struct recover_partition_by_utils {
 			return -1;
 		}
 
-		if (sizeof(struct mbr) != write(fd, (char*)mbr, sizeof(struct mbr)))
+		if (sizeof(struct mbr) != write(fd, (char*)mbr, sizeof(struct mbr))) {
+			close(fd);
 			return -1;
-		else
-			return 0;
+		}
+
+		close(fd);
+		return 0;
 	}
 
 	static int reread_table(std::string name)
@@ -149,13 +173,16 @@ struct recover_partition_by_utils {
 
 		if (ioctl(fd, BLKRRPART, NULL) == -1) {
 			perror("ioctl");
+			close(fd);
 			return -1;
 		}
 
+		close(fd);
 		return 0;
 	}
 
-	static int fsck(T &pt)
+	// timeout: second
+	static int fsck(T &pt, int timeout)
 	{
 		if (!pt.is_available || pt.is_disk || pt.devfile.empty())
 			return -1;
@@ -171,10 +198,9 @@ struct recover_partition_by_utils {
 			exit(execlp("fsck", "fsck", "-y", pt.devfile.c_str(), NULL));
 		}
 
-		// waitpid, to timeout in 5 minutes
 		int status;
 		int sleep_interval = 1;
-		int times = 0, max_times = 60 * 5 / sleep_interval;
+		int times = 0, max_times = timeout / sleep_interval;
 		while (times < max_times) {
 			sleep(sleep_interval);
 			if (waitpid(pid, &status, WNOHANG) == -1) {

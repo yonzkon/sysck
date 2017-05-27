@@ -31,7 +31,8 @@ mmcblk_checker::~mmcblk_checker()
 
 bool mmcblk_checker::is_exist()
 {
-	if (blk->current_partitions().size() == 0)
+	if (blk->current_partitions().size() == 0
+		|| !blk->current_partitions()[0].is_available)
 		return false;
 	else
 		return true;
@@ -103,7 +104,7 @@ int mmcblk_checker::do_part(std::string format_type)
 	return 0;
 }
 
-int mmcblk_checker::do_fsck()
+int mmcblk_checker::do_fsck(int timeout)
 {
 	const mmcblk::partition_container &partitions = blk->current_partitions();
 
@@ -111,7 +112,7 @@ int mmcblk_checker::do_fsck()
 		if (!partitions[i].is_disk && partitions[i].is_available && !partitions[i].is_mounted) {
 			int rc;
 			partition p = partitions[i];
-			if ((rc = blk->fsck(p)) != 0)
+			if ((rc = blk->fsck(p, timeout)) != 0)
 				return rc;
 		}
 	}
