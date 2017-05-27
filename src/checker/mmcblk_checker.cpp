@@ -31,7 +31,8 @@ mmcblk_checker::~mmcblk_checker()
 
 bool mmcblk_checker::is_exist()
 {
-	if (blk->current_partitions().size() == 0)
+	if (blk->current_partitions().size() == 0
+		|| !blk->current_partitions()[0].is_available)
 		return false;
 	else
 		return true;

@@ -53,12 +53,6 @@ void backend::run()
 			if (!wait_check_result())
 				return;
 
-			int rc = system("mount /dev/mmcblk0p1 /mnt/sd");
-			if (rc == 0)  {
-				system("cp -a /mnt/sd/rtx/terminal.db* /home");
-				system("umount /dev/mmcblk0p1");
-			}
-
 			emit check_state("do partition on " + name);
 			if (checker.do_part(conf->format_type) == -1) {
 				emit check_fatal("do partition on" + name + " failed");
@@ -69,19 +63,10 @@ void backend::run()
 				emit check_fatal(name + " isn't available");
 				return;
 			}
-
-			rc = system("mount /dev/mmcblk0p1 /mnt/sd");
-			if (rc == 0)  {
-				system("mkdir -p /mnt/sd/rtx");
-				system("cp -a /home/terminal.db* /mnt/sd/rtx");
-				system("rm -f /home/terminal.db*");
-				system("umount /dev/mmcblk0p1");
-			}
 		}
 	}
 
 	emit check_state("check finished");
-	sleep(1);
 	emit check_finish();
 }
 
