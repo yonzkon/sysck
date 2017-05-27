@@ -28,7 +28,7 @@ public:
 	bool is_available();
 
 	int do_part(std::string format_type);
-	int do_fsck();
+	int do_fsck(int timeout);
 
 	void print_partitions();
 

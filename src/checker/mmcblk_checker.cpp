@@ -103,12 +103,12 @@ int mmcblk_checker::do_part(std::string format_type)
 	return 0;
 }
 
-int mmcblk_checker::do_fsck()
+int mmcblk_checker::do_fsck(int timeout)
 {
 	for (auto item : blk->current_partitions()) {
 		if (!item.is_disk && item.is_available && !item.is_mounted) {
 			int rc;
-			if ((rc = blk->fsck(item)) != 0)
+			if ((rc = blk->fsck(item, timeout)) != 0)
 				return rc;
 		}
 	}

@@ -180,7 +180,8 @@ struct recover_partition_by_utils {
 		return 0;
 	}
 
-	static int fsck(T &pt)
+	// timeout: second
+	static int fsck(T &pt, int timeout)
 	{
 		if (!pt.is_available || pt.is_disk || pt.devfile.empty())
 			return -1;
@@ -196,10 +197,9 @@ struct recover_partition_by_utils {
 			exit(execlp("fsck", "fsck", "-y", pt.devfile.c_str(), NULL));
 		}
 
-		// waitpid, to timeout in 5 minutes
 		int status;
 		int sleep_interval = 1;
-		int times = 0, max_times = 60 * 5 / sleep_interval;
+		int times = 0, max_times = timeout / sleep_interval;
 		while (times < max_times) {
 			sleep(sleep_interval);
 			if (waitpid(pid, &status, WNOHANG) == -1) {

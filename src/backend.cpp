@@ -46,7 +46,7 @@ void backend::run()
 		}
 
 		emit check_state("do fsck on " + name);
-		if (checker.do_fsck() != 0) {
+		if (checker.do_fsck(conf->fsck_timeout) != 0) {
 			emit check_state("do check on " + name + " failed");
 			emit check_error(name + " is damaged, should we re-partition on it?");
 
