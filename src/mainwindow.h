@@ -24,6 +24,11 @@ public slots:
 	void on_state_msg(QString msg, msg_level level);
 
 private:
+	void handle_msg_info(QString msg);
+	void handle_msg_error(QString msg);
+	void handle_msg_fatal(QString msg);
+
+private:
 	Ui::MainWindow *ui;
 };
 

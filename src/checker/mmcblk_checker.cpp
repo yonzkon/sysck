@@ -69,6 +69,7 @@ void mmcblk_checker::process_check()
 		return;
 	}
 
+	// TODO: check fsck_status after do_fsck
 	emit state_msg("do fsck on " + tagname, MSG_INFO);
 	do_fsck(fsck_timeout);
 	for (auto &item : blk->current_partitions()) {
