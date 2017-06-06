@@ -3,6 +3,7 @@
 #include <QMessageBox>
 #include <unistd.h>
 #include <sys/reboot.h>
+#include "msg_type.h"
 
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
@@ -25,24 +26,16 @@ MainWindow::~MainWindow()
 	delete ui;
 }
 
-void MainWindow::on_state_msg(QString msg, msg_level level)
+void MainWindow::on_state_msg(QString msg, int type)
 {
-	switch (level) {
-	case MSG_INFO:
+	if (type & MSG_INFO)
 		handle_msg_info(msg);
-		break;
 
-	case MSG_ERROR:
-		handle_msg_error(msg);
-		break;
+	if (type & MSG_PERMISSION)
+		handle_msg_permission(msg);
 
-	case MSG_FATAL:
-		handle_msg_fatal(msg);
-		break;
-
-	default:
-		break;
-	}
+	if (type & MSG_REBOOT)
+		handle_msg_reboot(msg);
 }
 
 void MainWindow::handle_msg_info(QString msg)
@@ -50,21 +43,21 @@ void MainWindow::handle_msg_info(QString msg)
 	ui->textBrowser->append(msg);
 }
 
-void MainWindow::handle_msg_error(QString msg)
+void MainWindow::handle_msg_permission(QString msg)
 {
 	QMessageBox msgbox(QMessageBox::Question, NULL, msg + "\npress No to reboot the system",
 					   QMessageBox::Yes | QMessageBox::No);
 
 	if (msgbox.exec() == QMessageBox::Yes) {
-		emit check_return(true);
+		emit return_permission(true);
 	} else {
-		emit check_return(false);
+		emit return_permission(false);
 		reboot(0x1234567);
 		close();
 	}
 }
 
-void MainWindow::handle_msg_fatal(QString msg)
+void MainWindow::handle_msg_reboot(QString msg)
 {
 	QMessageBox msgbox;
 	msgbox.setText(msg + "\npress OK to reboot the system");

@@ -15,13 +15,13 @@ void backend::run()
 													 conf->format_type,
 													 conf->fsck_timeout);
 
-		qRegisterMetaType<msg_level>("msg_level");
+		//qRegisterMetaType<msg_level>("msg_level");
 		QObject::connect(this, SIGNAL(start_process_check()),
 						 checker, SLOT(process_check()));
-		QObject::connect(parent(), SIGNAL(check_return(bool)),
+		QObject::connect(parent(), SIGNAL(return_permission(bool)),
 						 checker, SLOT(continue_or_exit(bool)));
-		QObject::connect(checker, SIGNAL(state_msg(QString, msg_level)),
-						 parent(), SLOT(on_state_msg(QString, msg_level)));
+		QObject::connect(checker, SIGNAL(state_msg(QString, int)),
+						 parent(), SLOT(on_state_msg(QString, int)));
 
 		QThread *thread = new QThread;
 		checker->moveToThread(thread);

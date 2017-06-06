@@ -1,4 +1,5 @@
 #include "mmcblk_checker.h"
+#include "msg_type.h"
 #include "disk/mbr.h"
 #include "disk/fsck.h"
 #include <iostream>
@@ -44,20 +45,20 @@ void mmcblk_checker::process_check()
 
 	emit state_msg("checking if " + tagname + " exists", MSG_INFO);
 	if (!is_exist()) {
-		emit state_msg(tagname + " does not exist", MSG_FATAL);
+		emit state_msg(tagname + " does not exist", MSG_REBOOT);
 		return;
 	}
 
 	emit state_msg("checking if " + tagname + " is parted", MSG_INFO);
 	if (!is_parted()) {
-		emit state_msg(tagname + " isn't parted", MSG_PAUSE);
+		emit state_msg(tagname + " isn't parted", MSG_PERMISSION);
 
 		if (!wait_for_continue_or_exit())
 			return;
 
 		emit state_msg("do partition on " + tagname, MSG_INFO);
 		if (do_part(format_type) == -1) {
-			emit state_msg("do partition on" + tagname + " failed", MSG_FATAL);
+			emit state_msg("do partition on" + tagname + " failed", MSG_REBOOT);
 			return;
 		}
 		print_partitions();
@@ -65,7 +66,7 @@ void mmcblk_checker::process_check()
 
 	emit state_msg("checking if " + tagname + " is available", MSG_INFO);
 	if (!is_available()) {
-		emit state_msg(tagname + " isn't available", MSG_FATAL);
+		emit state_msg(tagname + " isn't available", MSG_REBOOT);
 		return;
 	}
 
@@ -84,9 +85,8 @@ void mmcblk_checker::process_check()
 		if (item.fsck_status & FSCK_NONDESTRUCT)
 			emit state_msg(tagname + ": File system errors corrected", MSG_INFO);
 
-		if (item.fsck_status & FSCK_DESTRUCT) {
-			emit state_msg(tagname  + ": System should be rebooted", MSG_INFO);
-		}
+		if (item.fsck_status & FSCK_DESTRUCT)
+			emit state_msg(tagname  + ": System should be rebooted", MSG_REBOOT);
 
 		if (item.fsck_status & FSCK_UNCORRECTED) {
 

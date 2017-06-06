@@ -3,7 +3,6 @@
 
 #include "disk/disk.h"
 #include "disk/partition.h"
-#include "msg_level.h"
 #include <string>
 #include <QObject>
 #include <QString>
@@ -27,7 +26,7 @@ public:
 	virtual ~mmcblk_checker();
 
 signals:
-	void state_msg(QString msg, msg_level level);
+	void state_msg(QString msg, int type);
 
 public slots:
 	void process_check();

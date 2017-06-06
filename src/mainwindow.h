@@ -3,7 +3,6 @@
 
 #include <QMainWindow>
 #include <string>
-#include "msg_level.h"
 
 namespace Ui {
 class MainWindow;
@@ -18,15 +17,15 @@ public:
 	~MainWindow();
 
 signals:
-	void check_return(bool);
+	void return_permission(bool);
 
 public slots:
-	void on_state_msg(QString msg, msg_level level);
+	void on_state_msg(QString msg, int type);
 
 private:
 	void handle_msg_info(QString msg);
-	void handle_msg_error(QString msg);
-	void handle_msg_fatal(QString msg);
+	void handle_msg_permission(QString msg);
+	void handle_msg_reboot(QString msg);
 
 private:
 	Ui::MainWindow *ui;

@@ -32,7 +32,7 @@ SOURCES += main.cpp\
 HEADERS  += mainwindow.h \
     backend.h \
     config.h \
-    msg_level.h \
+    msg_type.h \
     checker/mmcblk_checker.h \
     disk/device.h \
     disk/disk.h \
