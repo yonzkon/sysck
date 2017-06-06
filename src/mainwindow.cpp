@@ -1,7 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QMessageBox>
-#include <stdlib.h>
+#include <unistd.h>
+#include <sys/reboot.h>
 
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
@@ -24,31 +25,34 @@ MainWindow::~MainWindow()
 	delete ui;
 }
 
-void MainWindow::on_check_state(QString state)
+void MainWindow::on_state_msg(QString msg, sysck::msg_level level)
 {
-	ui->textBrowser->append(state);
-}
+	switch (level) {
+	case sysck::MSG_INFO:
+		ui->textBrowser->append(msg);
+		break;
 
-void MainWindow::on_check_error(QString errmsg)
-{
-	QMessageBox msgbox(QMessageBox::Question, NULL, errmsg + "\npress No to reboot the system",
-					   QMessageBox::Yes | QMessageBox::No);
+	case sysck::MSG_ERROR: {
+		QMessageBox msgbox(QMessageBox::Question, NULL, msg + "\npress No to reboot the system",
+						   QMessageBox::Yes | QMessageBox::No);
 
-	if (msgbox.exec() == QMessageBox::Yes) {
-		emit check_return(true);
-	} else {
-		emit check_return(false);
-		system("reboot -f");
+		if (msgbox.exec() == QMessageBox::Yes) {
+			emit check_return(true);
+		} else {
+			emit check_return(false);
+			reboot(0x1234567);
+			close();
+		}
+		break;
+	}
+
+	case sysck::MSG_FATAL: {
+		QMessageBox msgbox;
+		msgbox.setText(msg + "\npress OK to reboot the system");
+		msgbox.exec();
+
+		reboot(0x1234567);
 		close();
 	}
-}
-
-void MainWindow::on_check_fatal(QString errmsg)
-{
-	QMessageBox msgbox;
-	msgbox.setText(errmsg + "\npress OK to reboot the system");
-	msgbox.exec();
-
-	system("reboot -f");
-	close();
+	}
 }

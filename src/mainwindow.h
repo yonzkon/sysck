@@ -2,6 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <string>
+#include "msg_level.h"
 
 namespace Ui {
 class MainWindow;
@@ -16,12 +18,10 @@ public:
 	~MainWindow();
 
 signals:
-	void check_return(bool status);
+	void check_return(bool);
 
 public slots:
-	void on_check_state(QString state);
-	void on_check_error(QString errmsg);
-	void on_check_fatal(QString errmsg);
+	void on_state_msg(QString msg, sysck::msg_level level);
 
 private:
 	Ui::MainWindow *ui;
