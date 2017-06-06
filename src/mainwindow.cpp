@@ -25,14 +25,14 @@ MainWindow::~MainWindow()
 	delete ui;
 }
 
-void MainWindow::on_state_msg(QString msg, sysck::msg_level level)
+void MainWindow::on_state_msg(QString msg, msg_level level)
 {
 	switch (level) {
-	case sysck::MSG_INFO:
+	case MSG_INFO:
 		ui->textBrowser->append(msg);
 		break;
 
-	case sysck::MSG_ERROR: {
+	case MSG_ERROR: {
 		QMessageBox msgbox(QMessageBox::Question, NULL, msg + "\npress No to reboot the system",
 						   QMessageBox::Yes | QMessageBox::No);
 
@@ -46,13 +46,17 @@ void MainWindow::on_state_msg(QString msg, sysck::msg_level level)
 		break;
 	}
 
-	case sysck::MSG_FATAL: {
+	case MSG_FATAL: {
 		QMessageBox msgbox;
 		msgbox.setText(msg + "\npress OK to reboot the system");
 		msgbox.exec();
 
 		reboot(0x1234567);
 		close();
+		break;
 	}
+
+	default:
+		break;
 	}
 }

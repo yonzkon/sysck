@@ -15,6 +15,7 @@ void backend::run()
 													 conf->format_type,
 													 conf->fsck_timeout);
 
+		qRegisterMetaType<msg_level>("msg_level");
 		QObject::connect(this, SIGNAL(start_process_check()),
 						 checker, SLOT(process_check()));
 		QObject::connect(parent(), SIGNAL(check_return(bool)),

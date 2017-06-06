@@ -21,7 +21,7 @@ signals:
 	void check_return(bool);
 
 public slots:
-	void on_state_msg(QString msg, sysck::msg_level level);
+	void on_state_msg(QString msg, msg_level level);
 
 private:
 	Ui::MainWindow *ui;
