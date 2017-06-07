@@ -200,7 +200,6 @@ int mmcblk_checker::do_part(std::string format_type)
 			if (partitions[i].is_disk || !partitions[i].is_available
 				|| partitions[i].is_mounted)
 				continue;
-			sleep(1); // wait os to make device file
 			partition p = partitions[i];
 			if (blk->format(p, format_type) != 0) {
 				cout << "[FATAL] " << "format " << partitions[i].name << " failed." << endl;
