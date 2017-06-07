@@ -82,11 +82,16 @@ void mmcblk_checker::execute()
 
 	if (stage != STAGE_FSCK) return;
 	emit state_msg("do fsck on " + tagname, MSG_INFO);
-	do_fsck(fsck_timeout);
+	blk->fsck_partitions(fsck_timeout);
 	const mmcblk::partition_container &partitions = blk->current_partitions();
 	for (size_t i = 0; i < partitions.size(); i++) {
 		if (partitions[i].is_disk)
 			continue;
+
+		if (!partitions[i].is_fscked) {
+			emit state_msg(tagname + ": Fsck timeout or failed", MSG_REBOOT);
+			continue;
+		}
 
 		if ((partitions[i].fsck_status | FSCK_OK) == 0) {
 			emit state_msg(tagname + ": No errors", MSG_INFO);
@@ -192,7 +197,8 @@ int mmcblk_checker::do_part(std::string format_type)
 		}
 
 		for (size_t i = 0; i < partitions.size(); i++) {
-			if (partitions[i].is_disk || !partitions[i].is_available)
+			if (partitions[i].is_disk || !partitions[i].is_available
+				|| partitions[i].is_mounted)
 				continue;
 			sleep(1); // wait os to make device file
 			partition p = partitions[i];
@@ -204,18 +210,6 @@ int mmcblk_checker::do_part(std::string format_type)
 	}
 
 	return 0;
-}
-
-void mmcblk_checker::do_fsck(int timeout)
-{
-	const mmcblk::partition_container &partitions = blk->current_partitions();
-
-	for (size_t i = 0; i < partitions.size(); i++) {
-		if (!partitions[i].is_disk && partitions[i].is_available && !partitions[i].is_mounted) {
-			partition p = partitions[i];
-			blk->fsck(p, timeout);
-		}
-	}
 }
 
 void mmcblk_checker::print_partitions()

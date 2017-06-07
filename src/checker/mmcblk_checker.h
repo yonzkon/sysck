@@ -47,7 +47,6 @@ private:
 	bool is_available();
 
 	int do_part(std::string format_type);
-	void do_fsck(int timeout);
 
 	void print_partitions();
 

@@ -42,6 +42,13 @@ public:
 		}
 	}
 
+	void fsck_partitions(int timeout)
+	{
+		for (typename partition_container::iterator iter = partitions.begin();
+			 iter != partitions.end(); ++iter)
+			RecoverPolicy<T>::fsck(*iter, timeout);
+	}
+
 private:
 	std::string name;
 	partition_container partitions;
