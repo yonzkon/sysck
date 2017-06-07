@@ -37,6 +37,7 @@ public:
 		if (RecoverPolicy<T>::reread_table(this->name) == -1) {
 			return -1;
 		} else {
+			sleep(1); // wait os to make device node file
 			DetectPolicy<T>::detect(name, partitions);
 			return 0;
 		}
