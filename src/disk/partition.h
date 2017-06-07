@@ -199,26 +199,27 @@ struct recover_partition_by_utils {
 			exit(execlp("fsck", "fsck", "-y", pt.devfile.c_str(), NULL));
 		}
 
-		int status;
+		int status, rc;
 		int sleep_interval = 1;
 		int times = 0, max_times = timeout / sleep_interval;
 		while (times < max_times) {
-			sleep(sleep_interval);
-			if (waitpid(pid, &status, WNOHANG) == -1) {
+			rc = waitpid(pid, &status, WNOHANG);
+			if (rc == -1) {
 				perror("waitpid");
 				return -1;
+			} else if (rc == 0) {
+				sleep(sleep_interval);
+				times++;
+			} else if (rc == pid) {
+				if (WIFSIGNALED(status))
+					return -1;
+
+				if (WIFEXITED(status)) {
+					pt.is_fscked = true;
+					pt.fsck_status =  WEXITSTATUS(status);
+					return 0;
+				}
 			}
-
-			if (WIFSIGNALED(status))
-				return -1;
-
-			if (WIFEXITED(status)) {
-				pt.is_fscked = true;
-				pt.fsck_status =  WEXITSTATUS(status);
-				return 0;
-			}
-
-			times++;
 		}
 
 		kill(pid, SIGTERM);

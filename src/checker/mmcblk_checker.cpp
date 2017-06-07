@@ -196,7 +196,7 @@ int mmcblk_checker::do_part(std::string format_type)
 		}
 
 		for (auto &item : partitions) {
-			if (item.is_disk || !item.is_available)
+			if (item.is_disk || !item.is_available || item.is_mounted)
 				continue;
 			sleep(1); // wait os to make device file
 			if (blk->format(item, format_type) != 0) {
