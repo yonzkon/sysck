@@ -17,14 +17,15 @@ public:
 	~MainWindow();
 
 signals:
-	void return_permission(bool);
+	void continue_check(bool);
+	void stop_check();
 
 public slots:
 	void on_state_msg(QString msg, int type);
 
 private:
 	void handle_msg_info(QString msg);
-	void handle_msg_permission(QString msg);
+	void handle_msg_permit(QString msg);
 	void handle_msg_reboot(QString msg);
 
 private:

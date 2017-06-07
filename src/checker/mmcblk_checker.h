@@ -18,6 +18,14 @@ typedef disk<
 class mmcblk_checker : public QObject {
 	Q_OBJECT
 private:
+	enum check_stage {
+		STAGE_EXIT,
+		STAGE_PART,
+		STAGE_AVAI,
+		STAGE_FSCK,
+	};
+
+private:
 	mmcblk_checker(mmcblk_checker &rhs);
 	mmcblk_checker& operator=(mmcblk_checker &rhs);
 
@@ -27,13 +35,13 @@ public:
 
 signals:
 	void state_msg(QString msg, int type);
+	void finished();
 
 public slots:
-	void process_check();
-	void continue_or_exit(bool continue_or_exit);
+	void execute();
+	void carryon(bool part_permission);
 
 private:
-	bool wait_for_continue_or_exit();
 	bool is_exist();
 	bool is_parted();
 	bool is_available();
@@ -48,8 +56,8 @@ private:
 	std::string format_type;
 	int fsck_timeout;
 	mmcblk* blk;
-	bool wait_is_block;
-	bool wait_result_is_continue;
+	bool part_permission;
+	check_stage stage;
 };
 
 }

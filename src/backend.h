@@ -14,7 +14,7 @@ public:
 	void run();
 
 signals:
-	void start_process_check();
+	void start_check();
 
 private:
 	sysck::config *conf;

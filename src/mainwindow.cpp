@@ -31,8 +31,8 @@ void MainWindow::on_state_msg(QString msg, int type)
 	if (type & MSG_INFO)
 		handle_msg_info(msg);
 
-	if (type & MSG_PERMISSION)
-		handle_msg_permission(msg);
+	if (type & MSG_PERMIT)
+		handle_msg_permit(msg);
 
 	if (type & MSG_REBOOT)
 		handle_msg_reboot(msg);
@@ -43,15 +43,16 @@ void MainWindow::handle_msg_info(QString msg)
 	ui->textBrowser->append(msg);
 }
 
-void MainWindow::handle_msg_permission(QString msg)
+void MainWindow::handle_msg_permit(QString msg)
 {
-	QMessageBox msgbox(QMessageBox::Question, NULL, msg + "\npress No to reboot the system",
+	QMessageBox msgbox(QMessageBox::Question, NULL,
+					   msg + "\npress Yes to continue\npress No to reboot the system",
 					   QMessageBox::Yes | QMessageBox::No);
 
 	if (msgbox.exec() == QMessageBox::Yes) {
-		emit return_permission(true);
+		emit continue_check(true);
 	} else {
-		emit return_permission(false);
+		emit stop_check();
 		reboot(0x1234567);
 		close();
 	}

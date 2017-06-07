@@ -28,8 +28,8 @@ mmcblk_checker::mmcblk_checker(std::string name,
 	, format_type(format_type)
 	, fsck_timeout(fsck_timeout)
 	, blk(new mmcblk(name))
-	, wait_is_block(true)
-	, wait_result_is_continue(false)
+	, part_permission(false)
+	, stage(STAGE_EXIT)
 {
 }
 
@@ -38,39 +38,49 @@ mmcblk_checker::~mmcblk_checker()
 	delete blk;
 }
 
-void mmcblk_checker::process_check()
+void mmcblk_checker::execute()
 {
 	QString tagname = "[" + QString(name.c_str()) + "]";
 	print_partitions();
 
-	emit state_msg("checking if " + tagname + " exists", MSG_INFO);
-	if (!is_exist()) {
-		emit state_msg(tagname + " does not exist", MSG_REBOOT);
-		return;
-	}
-
-	emit state_msg("checking if " + tagname + " is parted", MSG_INFO);
-	if (!is_parted()) {
-		emit state_msg(tagname + " isn't parted", MSG_PERMISSION);
-
-		if (!wait_for_continue_or_exit())
-			return;
-
-		emit state_msg("do partition on " + tagname, MSG_INFO);
-		if (do_part(format_type) == -1) {
-			emit state_msg("do partition on" + tagname + " failed", MSG_REBOOT);
+	// FIXME: ugly implemention which drives me crazy...
+	if (stage == STAGE_EXIT) {
+		emit state_msg("checking if " + tagname + " exists", MSG_INFO);
+		if (!is_exist()) {
+			emit state_msg(tagname + " does not exist", MSG_REBOOT);
 			return;
 		}
-		print_partitions();
+		stage = STAGE_PART;
 	}
 
-	emit state_msg("checking if " + tagname + " is available", MSG_INFO);
-	if (!is_available()) {
-		emit state_msg(tagname + " isn't available", MSG_REBOOT);
-		return;
+	if (stage == STAGE_PART) {
+		emit state_msg("checking if " + tagname + " is parted", MSG_INFO);
+		if (!is_parted()) {
+			if (!part_permission) {
+				emit state_msg(tagname + " isn't parted", MSG_PERMIT);
+				return;
+			}
+
+			emit state_msg("do partition on " + tagname, MSG_INFO);
+			if (do_part(format_type) == -1) {
+				emit state_msg("do partition on" + tagname + " failed", MSG_REBOOT);
+				return;
+			}
+			print_partitions();
+		}
+		stage = STAGE_AVAI;
 	}
 
-	// TODO: check fsck_status after do_fsck
+	if (stage == STAGE_AVAI) {
+		emit state_msg("checking if " + tagname + " is available", MSG_INFO);
+		if (!is_available()) {
+			emit state_msg(tagname + " isn't available", MSG_REBOOT);
+			return;
+		}
+		stage = STAGE_FSCK;
+	}
+
+	if (stage != STAGE_FSCK) return;
 	emit state_msg("do fsck on " + tagname, MSG_INFO);
 	do_fsck(fsck_timeout);
 	for (auto &item : blk->current_partitions()) {
@@ -82,33 +92,45 @@ void mmcblk_checker::process_check()
 			continue;
 		}
 
-		if (item.fsck_status & FSCK_NONDESTRUCT)
+		if (item.fsck_status & FSCK_NONDESTRUCT) {
 			emit state_msg(tagname + ": File system errors corrected", MSG_INFO);
+			continue;
+		}
 
-		if (item.fsck_status & FSCK_DESTRUCT)
+		if (item.fsck_status & FSCK_DESTRUCT) {
 			emit state_msg(tagname  + ": System should be rebooted", MSG_REBOOT);
+			return;
+		}
 
 		if (item.fsck_status & FSCK_UNCORRECTED) {
+			emit state_msg(tagname + ": File system errors left uncorrected", MSG_REBOOT);
+			return;
+		}
 
+		if (item.fsck_status & FSCK_ERROR) {
+			emit state_msg(tagname + ": Operational error", MSG_REBOOT);
+			return;
+		}
+
+		if (item.fsck_status & FSCK_USAGE) {
+			emit state_msg(tagname + ": Usage or syntax error", MSG_REBOOT);
+			return;
+		}
+
+		if (item.fsck_status & FSCK_CANCELED) {
+			emit state_msg(tagname + ": Fsck canceled by user request", MSG_REBOOT);
+			return;
 		}
 	}
 
 	emit state_msg("check finished", MSG_INFO);
+	emit finished();
 }
 
-void mmcblk_checker::continue_or_exit(bool continue_or_exit)
+void mmcblk_checker::carryon(bool part_permission)
 {
-	wait_result_is_continue = continue_or_exit;
-	wait_is_block = false;
-}
-
-bool mmcblk_checker::wait_for_continue_or_exit()
-{
-	while (wait_is_block)
-		sleep(1);
-
-	wait_is_block = true;
-	return wait_result_is_continue;
+	this->part_permission = part_permission;
+	execute();
 }
 
 bool mmcblk_checker::is_exist()
@@ -171,6 +193,7 @@ int mmcblk_checker::do_part(std::string format_type)
 		for (auto item : partitions) {
 			if (item.is_disk || !item.is_available)
 				continue;
+			sleep(1); // wait os to make device file
 			if (blk->format(item, format_type) != 0) {
 				cout << "[FATAL] " << "format " << item.name << " failed." << endl;
 				return -1;

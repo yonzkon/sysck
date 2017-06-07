@@ -14,25 +14,33 @@ void backend::run()
 		mmcblk_checker *checker = new mmcblk_checker(item.c_str(),
 													 conf->format_type,
 													 conf->fsck_timeout);
+		QThread *thread = new QThread;
+		checker->moveToThread(thread);
+		thread->moveToThread(thread);
+		thread->start();
 
 		//qRegisterMetaType<msg_level>("msg_level");
-		QObject::connect(this, SIGNAL(start_process_check()),
-						 checker, SLOT(process_check()));
-		QObject::connect(parent(), SIGNAL(return_permission(bool)),
-						 checker, SLOT(continue_or_exit(bool)));
+		QObject::connect(this, SIGNAL(start_check()),
+						 checker, SLOT(execute()));
+		QObject::connect(parent(), SIGNAL(continue_check(bool)),
+						 checker, SLOT(carryon(bool)));
+		QObject::connect(parent(), SIGNAL(stop_check()),
+						 thread, SLOT(quit()));
+		QObject::connect(checker, SIGNAL(finished()),
+						 thread, SLOT(quit()));
 		QObject::connect(checker, SIGNAL(state_msg(QString, int)),
 						 parent(), SLOT(on_state_msg(QString, int)));
 
-		QThread *thread = new QThread;
-		checker->moveToThread(thread);
-		thread->start();
-		emit start_process_check();
+		emit start_check();
 		thread->wait();
 
+		QObject::disconnect(this, SIGNAL(start_check()));
+		QObject::disconnect(parent(), SIGNAL(continue_check(bool)));
+		QObject::disconnect(parent(), SIGNAL(stop_check()));
 		checker->disconnect();
-		QObject::disconnect(this, SIGNAL(start_process_check()));
-		QObject::disconnect(parent(), SIGNAL(check_return(bool)));
 		delete thread;
 		delete checker;
 	}
+
+	QObject::connect(this, SIGNAL(finished()), parent(), SLOT(close()));
 }
