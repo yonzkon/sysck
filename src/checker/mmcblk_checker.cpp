@@ -82,10 +82,15 @@ void mmcblk_checker::execute()
 
 	if (stage != STAGE_FSCK) return;
 	emit state_msg("do fsck on " + tagname, MSG_INFO);
-	do_fsck(fsck_timeout);
+	blk->fsck_partitions(fsck_timeout);
 	for (auto &item : blk->current_partitions()) {
 		if (item.is_disk)
 			continue;
+
+		if (!item.is_fscked) {
+			emit state_msg(tagname + ": Fsck timeout or failed", MSG_REBOOT);
+			continue;
+		}
 
 		if ((item.fsck_status | FSCK_OK) == 0) {
 			emit state_msg(tagname + ": No errors", MSG_INFO);
@@ -190,7 +195,7 @@ int mmcblk_checker::do_part(std::string format_type)
 			return -1;
 		}
 
-		for (auto item : partitions) {
+		for (auto &item : partitions) {
 			if (item.is_disk || !item.is_available)
 				continue;
 			sleep(1); // wait os to make device file
@@ -202,14 +207,6 @@ int mmcblk_checker::do_part(std::string format_type)
 	}
 
 	return 0;
-}
-
-void mmcblk_checker::do_fsck(int timeout)
-{
-	for (auto item : blk->current_partitions()) {
-		if (!item.is_disk && item.is_available && !item.is_mounted)
-			blk->fsck(item, timeout);
-	}
 }
 
 void mmcblk_checker::print_partitions()

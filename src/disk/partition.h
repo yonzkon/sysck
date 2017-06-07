@@ -185,7 +185,7 @@ struct recover_partition_by_utils {
 	// timeout: second
 	static int fsck(T &pt, int timeout)
 	{
-		if (!pt.is_available || pt.is_disk || pt.devfile.empty())
+		if (pt.is_disk || !pt.is_available || pt.is_mounted || pt.devfile.empty())
 			return -1;
 
 		int pid = fork();
@@ -226,9 +226,9 @@ struct recover_partition_by_utils {
 		return -1;
 	}
 
-	static int format(T &pt, std::string type)
+	static int format(const T &pt, std::string type)
 	{
-		if (!pt.is_available || pt.is_disk || pt.devfile.empty())
+		if (pt.is_disk || !pt.is_available || pt.is_mounted || pt.devfile.empty())
 			return -1;
 
 		// FIXME: mkfs may prompt 'Proceed anyway? (y,n)'
