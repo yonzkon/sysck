@@ -21,6 +21,8 @@ namespace sysck {
 struct partition : public device {
 	bool is_disk;
 	bool is_mounted;
+	bool is_fscked;
+	int fsck_status;
 
 	int blocks;   /* not used */
 	int readonly; /* 0 = read-write */
@@ -211,8 +213,11 @@ struct recover_partition_by_utils {
 			//if (WIFSIGNALED(status))
 			//	return -1;
 
-			if (WIFEXITED(status))
-				return WEXITSTATUS(status);
+			if (WIFEXITED(status)) {
+				pt.is_fscked = true;
+				pt.fsck_status =  WEXITSTATUS(status);
+				return 0;
+			}
 
 			times++;
 		}

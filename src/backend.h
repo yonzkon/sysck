@@ -12,21 +12,12 @@ public:
 
 public:
 	void run();
-	bool wait_check_result();
 
 signals:
-	void check_state(QString state);
-	void check_error(QString errmsg);
-	void check_fatal(QString errmsg);
-	void check_finish();
-
-public slots:
-	void on_check_return(bool);
+	void start_check();
 
 private:
 	sysck::config *conf;
-	volatile bool blocked;
-	bool check_result;
 };
 
 #endif // BACKEND_H

@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <string>
 
 namespace Ui {
 class MainWindow;
@@ -16,12 +17,16 @@ public:
 	~MainWindow();
 
 signals:
-	void check_return(bool status);
+	void continue_check(bool);
+	void stop_check();
 
 public slots:
-	void on_check_state(QString state);
-	void on_check_error(QString errmsg);
-	void on_check_fatal(QString errmsg);
+	void on_state_msg(QString msg, int type);
+
+private:
+	void handle_msg_info(QString msg);
+	void handle_msg_permit(QString msg);
+	void handle_msg_reboot(QString msg);
 
 private:
 	Ui::MainWindow *ui;
