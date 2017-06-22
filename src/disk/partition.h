@@ -84,6 +84,7 @@ struct detect_partition_with_devfile {
 		int fd = open(pt.devfile.c_str(), O_RDWR);
 		if (fd == -1) {
 			perror("open");
+			pt.readonly = 1;
 			return;
 		}
 

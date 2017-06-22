@@ -2,6 +2,7 @@
 #define DISK_H
 
 #include <string>
+#include <unistd.h>
 
 namespace sysck {
 
