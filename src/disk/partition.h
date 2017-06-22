@@ -47,9 +47,7 @@ struct detect_partition_with_devfile {
 			ifpart.getline(buffer, 256);
 			if (strstr(buffer, name.c_str()) != NULL) {
 				T part;// = {};
-				part.is_available = false;
-				part.is_disk = false;
-				part.is_mounted = false;
+				memset(&part, 0, sizeof(T));
 
 				std::stringstream(buffer) >> part.major
 										  >> part.minor
