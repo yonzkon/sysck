@@ -19,7 +19,7 @@ class mmcblk_checker : public QObject {
 	Q_OBJECT
 private:
 	enum check_stage {
-		STAGE_EXIT,
+		STAGE_EXIST,
 		STAGE_PART,
 		STAGE_AVAI,
 		STAGE_FSCK,

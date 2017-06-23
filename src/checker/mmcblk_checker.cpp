@@ -29,7 +29,7 @@ mmcblk_checker::mmcblk_checker(std::string name,
 	, fsck_timeout(fsck_timeout)
 	, blk(new mmcblk(name))
 	, part_permission(false)
-	, stage(STAGE_EXIT)
+	, stage(STAGE_EXIST)
 {
 }
 
@@ -44,7 +44,7 @@ void mmcblk_checker::execute()
 	print_partitions();
 
 	// FIXME: ugly implemention which drives me crazy...
-	if (stage == STAGE_EXIT) {
+	if (stage == STAGE_EXIST) {
 		emit state_msg("checking if " + tagname + " exists", MSG_INFO);
 		if (!is_exist()) {
 			emit state_msg(tagname + " does not exist", MSG_REBOOT);
