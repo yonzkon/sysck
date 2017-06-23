@@ -1,0 +1,32 @@
+#+TITLE: SD卡修复教程
+#+AUTHOR: yiendxie@gmail.com
+#+OPTIONS: ^:nil
+#+HTML_HEAD: <link rel='stylesheet' href='./orgmode.css' />
+
+* 终端开机后会自动执行修复工具sysck，请根据sysck提示选择修复策略
+** SD卡物理异常
+  - 未检测到SD卡：请确认SD卡是否存在
+  - SD卡无法读写（操作系统，lock，物理损坏）：请更换SD卡，更换后仍无法读写，请将问题终端寄回。
+** SD卡分区表异常
+  - 未检测到分区表：选择是否重建分区表或重启系统。
+  - 分区表数据异常：（未实现）
+** SD卡第一分区异常
+  - 分区数据异常且修复失败：选择是否重建分区表或重启系统
+  - 分区没有格式化：选择是否格式化或重启系统（未实现）
+  - 分区格式不是vfat或ext2：选择是否格式化或重启系统
+  - 第一个分区小于6G：提示是否重建分区表或重启系统
+* 手工修复教程（可以在运行SD卡修复工具时，也可以在运行主程序时）
+** telnet到问题终端
+telnet 192.168.118.x
+** 杀死主程序
+killall -9 monit pcheck rtx_v2 sysck
+** 卸载SD卡
+umount /dev/mmcblk0p1 或者 umount /mnt/sd
+** 清除分区表和第一个分区超级块数据
+dd if=/dev/zero of=/dev/mmcblk0 bs=4096 count=2560
+** 重新读取分区表
+busybox20170111 blockdev --rereadpt /dev/mmcblk0
+** 执行SD卡检测修复工具
+/bin/sysck -d mmcblk0 -qws
+** 重启操作系统
+reboot -f
