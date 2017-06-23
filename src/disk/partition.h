@@ -3,6 +3,7 @@
 
 #include "device.h"
 #include "mbr.h"
+#include <cstdlib>
 #include <string>
 #include <sstream>
 #include <fstream>
@@ -143,6 +144,13 @@ struct recover_partition_by_utils {
 			perror("access");
 			return -1;
 		}
+
+#ifdef MBR_CLEAR
+		std::stringstream cmd;
+		cmd << "dd if=/dev/zero of=/dev/" << name << " bs=4096 count=2560";
+		if (system(cmd.str().c_str()) != 0)
+			return -1;
+#endif
 
 		int fd = open(devfile.c_str(), O_RDWR);
 		if (fd == -1) {

@@ -195,6 +195,7 @@ int mmcblk_checker::do_part(std::string format_type)
 			return -1;
 		}
 
+		sleep(1); // wait os to make device node file
 		for (auto &item : partitions) {
 			if (item.is_disk || !item.is_available || item.is_mounted)
 				continue;
