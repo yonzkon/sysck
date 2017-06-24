@@ -25,12 +25,18 @@ mmcblk_checker::mmcblk_checker(std::string name,
 							   std::string format_type,
 							   int fsck_timeout)
 	: name(name)
+	, tagname("[" + QString(name.c_str()) + "]")
 	, format_type(format_type)
 	, fsck_timeout(fsck_timeout)
 	, blk(new mmcblk(name))
 	, part_permission(false)
-	, stage(STAGE_EXIST)
 {
+	units.push_back({"check_exist", &mmcblk_checker::check_exist, false, false});
+	units.push_back({"check_part", &mmcblk_checker::check_part, false, false});
+	units.push_back({"check_volume", &mmcblk_checker::check_volume, false, false});
+	units.push_back({"check_available", &mmcblk_checker::check_available, false, false});
+	units.push_back({"check_fsck", &mmcblk_checker::check_fsck, false, false});
+	units.push_back({"check_finished", &mmcblk_checker::check_finished, false, false});
 }
 
 mmcblk_checker::~mmcblk_checker()
@@ -40,47 +46,92 @@ mmcblk_checker::~mmcblk_checker()
 
 void mmcblk_checker::execute()
 {
-	QString tagname = "[" + QString(name.c_str()) + "]";
+	run_check();
+}
+
+void mmcblk_checker::carryon(bool part_permission)
+{
+	this->part_permission = part_permission;
+	execute();
+}
+
+void mmcblk_checker::check_exist(mmcblk_check_unit *unit)
+{
+	emit state_msg("checking if " + tagname + " exists", MSG_INFO);
+
+	if (!is_exist()) {
+		emit state_msg(tagname + " does not exist", MSG_REBOOT);
+		unit->has_passed = false;
+		unit->has_completed = true;
+		stop_check();
+	} else {
+		unit->has_passed = true;
+		unit->has_completed = true;
+	}
+}
+
+void mmcblk_checker::check_part(mmcblk_check_unit *unit)
+{
+	emit state_msg("checking if " + tagname + " is parted", MSG_INFO);
+
+	if (is_parted()) {
+		unit->has_passed = true;
+		unit->has_completed = true;
+		return;
+	}
+
+	if (!part_permission) {
+		emit state_msg(tagname + " isn't parted", MSG_PERMIT);
+		unit->has_passed = false;
+		unit->has_completed = false;
+		stop_check();
+		return;
+	}
+
+	emit state_msg("do partition on " + tagname, MSG_INFO);
+	if (do_part(format_type) == -1) {
+		emit state_msg("do partition on" + tagname + " failed", MSG_REBOOT);
+		unit->has_passed = false;
+		unit->has_completed = true;
+		stop_check();
+		return;
+	}
 	print_partitions();
 
-	// FIXME: ugly implemention which drives me crazy...
-	if (stage == STAGE_EXIST) {
-		emit state_msg("checking if " + tagname + " exists", MSG_INFO);
-		if (!is_exist()) {
-			emit state_msg(tagname + " does not exist", MSG_REBOOT);
-			return;
-		}
-		stage = STAGE_PART;
+	unit->has_completed = true;
+}
+
+void mmcblk_checker::check_volume(mmcblk_check_unit *unit)
+{
+	auto partitions = blk->current_partitions();
+	double first_partition_size = (double)partitions[1].size64 / 1024 / 1024 / 1024;
+	if (first_partition_size < 6) {
+		emit state_msg(tagname + "'s first partition is "
+					   + QString("%1").arg(first_partition_size)
+					   + "G, not meet the lower limite 6G", MSG_REBOOT);
+		unit->has_passed = false;
+		unit->has_completed = true;
+		stop_check();
+	} else {
+		unit->has_passed = true;
+		unit->has_completed = true;
 	}
+}
 
-	if (stage == STAGE_PART) {
-		emit state_msg("checking if " + tagname + " is parted", MSG_INFO);
-		if (!is_parted()) {
-			if (!part_permission) {
-				emit state_msg(tagname + " isn't parted", MSG_PERMIT);
-				return;
-			}
+void mmcblk_checker::check_available(mmcblk_check_unit *unit)
+{
+	emit state_msg("checking if " + tagname + " is available", MSG_INFO);
 
-			emit state_msg("do partition on " + tagname, MSG_INFO);
-			if (do_part(format_type) == -1) {
-				emit state_msg("do partition on" + tagname + " failed", MSG_REBOOT);
-				return;
-			}
-			print_partitions();
-		}
-		stage = STAGE_AVAI;
+	if (!is_available()) {
+		emit state_msg(tagname + " isn't available", MSG_REBOOT);
+		unit->has_passed = false;
+		unit->has_completed = true;
+		stop_check();
 	}
+}
 
-	if (stage == STAGE_AVAI) {
-		emit state_msg("checking if " + tagname + " is available", MSG_INFO);
-		if (!is_available()) {
-			emit state_msg(tagname + " isn't available", MSG_REBOOT);
-			return;
-		}
-		stage = STAGE_FSCK;
-	}
-
-	if (stage != STAGE_FSCK) return;
+void mmcblk_checker::check_fsck(mmcblk_check_unit *unit)
+{
 	emit state_msg("do fsck on " + tagname, MSG_INFO);
 	blk->fsck_partitions(fsck_timeout);
 	for (auto &item : blk->current_partitions()) {
@@ -89,7 +140,10 @@ void mmcblk_checker::execute()
 
 		if (!item.is_fscked) {
 			emit state_msg(tagname + ": Fsck timeout or failed", MSG_REBOOT);
-			continue;
+			unit->has_passed = false;
+			unit->has_completed = true;
+			stop_check();
+			return;
 		}
 
 		if ((item.fsck_status | FSCK_OK) == 0) {
@@ -104,38 +158,57 @@ void mmcblk_checker::execute()
 
 		if (item.fsck_status & FSCK_DESTRUCT) {
 			emit state_msg(tagname  + ": System should be rebooted", MSG_REBOOT);
+			unit->has_passed = true;
+			unit->has_completed = true;
+			stop_check();
 			return;
 		}
 
 		if (item.fsck_status & FSCK_UNCORRECTED) {
 			emit state_msg(tagname + ": File system errors left uncorrected", MSG_REBOOT);
+			unit->has_passed = false;
+			unit->has_completed = true;
+			stop_check();
 			return;
 		}
 
 		if (item.fsck_status & FSCK_ERROR) {
 			emit state_msg(tagname + ": Operational error", MSG_REBOOT);
+			unit->has_passed = false;
+			unit->has_completed = true;
+			stop_check();
 			return;
 		}
 
 		if (item.fsck_status & FSCK_USAGE) {
 			emit state_msg(tagname + ": Usage or syntax error", MSG_REBOOT);
+			unit->has_passed = false;
+			unit->has_completed = true;
+			stop_check();
 			return;
 		}
 
 		if (item.fsck_status & FSCK_CANCELED) {
 			emit state_msg(tagname + ": Fsck canceled by user request", MSG_REBOOT);
+			unit->has_passed = false;
+			unit->has_completed = true;
+			stop_check();
 			return;
 		}
 	}
 
-	emit state_msg("check finished", MSG_INFO);
-	emit finished();
+	unit->has_passed = true;
+	unit->has_completed = true;
 }
 
-void mmcblk_checker::carryon(bool part_permission)
+void mmcblk_checker::check_finished(mmcblk_check_unit *unit)
 {
-	this->part_permission = part_permission;
-	execute();
+	unit->has_passed = true;
+	unit->has_completed = true;
+	stop_check();
+
+	emit state_msg("check finished", MSG_INFO);
+	emit finished();
 }
 
 bool mmcblk_checker::is_exist()

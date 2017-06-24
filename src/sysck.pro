@@ -34,6 +34,8 @@ HEADERS  += mainwindow.h \
     backend.h \
     config.h \
     msg_type.h \
+    checker/check_unit.h \
+    checker/base_checker.h \
     checker/mmcblk_checker.h \
     disk/device.h \
     disk/disk.h \

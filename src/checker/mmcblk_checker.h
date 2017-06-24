@@ -3,8 +3,8 @@
 
 #include "disk/disk.h"
 #include "disk/partition.h"
+#include "base_checker.h"
 #include <string>
-#include <QObject>
 #include <QString>
 
 namespace sysck {
@@ -15,15 +15,10 @@ typedef disk<
 	recover_partition_by_utils>
 	mmcblk;
 
-class mmcblk_checker : public QObject {
+class mmcblk_checker : public base_checker<mmcblk_checker> {
 	Q_OBJECT
-private:
-	enum check_stage {
-		STAGE_EXIST,
-		STAGE_PART,
-		STAGE_AVAI,
-		STAGE_FSCK,
-	};
+public:
+	typedef check_unit<mmcblk_checker> mmcblk_check_unit;
 
 private:
 	mmcblk_checker(mmcblk_checker &rhs);
@@ -42,21 +37,27 @@ public slots:
 	void carryon(bool part_permission);
 
 private:
+	void check_exist(mmcblk_check_unit *unit);
+	void check_part(mmcblk_check_unit *unit);
+	void check_volume(mmcblk_check_unit *unit);
+	void check_available(mmcblk_check_unit *unit);
+	void check_fsck(mmcblk_check_unit *unit);
+	void check_finished(mmcblk_check_unit *unit);
+
 	bool is_exist();
 	bool is_parted();
 	bool is_available();
 
 	int do_part(std::string format_type);
-
 	void print_partitions();
 
 private:
 	std::string name;
+	QString tagname;
 	std::string format_type;
 	int fsck_timeout;
 	mmcblk* blk;
 	bool part_permission;
-	check_stage stage;
 };
 
 }
