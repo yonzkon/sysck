@@ -36,9 +36,9 @@ struct partition : public device {
 
 template<class T>
 struct detect_partition_with_devfile {
-	typedef std::vector<T> partition_container;
+	typedef std::vector<T> partition_collection_type;
 
-	static void detect(std::string &name, partition_container &partitions)
+	static void detect(std::string &name, partition_collection_type &partitions)
 	{
 		std::regex pattern(name);
 		std::ifstream ifpart("/proc/partitions");
