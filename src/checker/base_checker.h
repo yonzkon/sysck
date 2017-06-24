@@ -11,7 +11,7 @@ template <class T>
 class base_checker : public QObject {
 public:
 	typedef check_unit<T> unit_type;
-	typedef std::vector<check_unit<T>> unit_collection_type;
+	typedef std::vector<unit_type> unit_collection_type;
 
 private:
 	enum {
