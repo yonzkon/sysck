@@ -45,9 +45,10 @@ void MainWindow::handle_msg_info(QString msg)
 
 void MainWindow::handle_msg_permit(QString msg)
 {
-	QMessageBox msgbox(QMessageBox::Question, NULL,
-					   msg + "\npress Yes to continue\npress No to reboot the system",
+	QMessageBox msgbox(QMessageBox::Question, NULL, msg,
 					   QMessageBox::Yes | QMessageBox::No);
+	msgbox.setButtonText(QMessageBox::Yes, "continue");
+	msgbox.setButtonText(QMessageBox::No, "reboot");
 
 	if (msgbox.exec() == QMessageBox::Yes) {
 		emit continue_check(true);
@@ -61,7 +62,8 @@ void MainWindow::handle_msg_permit(QString msg)
 void MainWindow::handle_msg_reboot(QString msg)
 {
 	QMessageBox msgbox;
-	msgbox.setText(msg + "\npress OK to reboot the system");
+	msgbox.setText(msg);
+	msgbox.setButtonText(QMessageBox::Ok, "reboot");
 	msgbox.exec();
 
 	reboot(0x1234567);
