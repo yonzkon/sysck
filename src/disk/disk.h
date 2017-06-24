@@ -12,7 +12,8 @@ template <class T,
 class disk : public DetectPolicy<T>,
 			 public RecoverPolicy<T> {
 public:
-	typedef typename DetectPolicy<T>::partition_container partition_container;
+	typedef typename DetectPolicy<T>::partition_collection_type
+		partition_collection_type;
 
 private:
 	disk(disk &rhs);
@@ -28,7 +29,7 @@ public:
 	virtual ~disk() {}
 
 public:
-	const partition_container& current_partitions() const
+	const partition_collection_type& current_partitions() const
 	{
 		return partitions;
 	}
@@ -46,14 +47,14 @@ public:
 
 	void fsck_partitions(int timeout)
 	{
-		for (typename partition_container::iterator iter = partitions.begin();
+		for (typename partition_collection_type::iterator iter = partitions.begin();
 			 iter != partitions.end(); ++iter)
 			RecoverPolicy<T>::fsck(*iter, timeout);
 	}
 
 private:
 	std::string name;
-	partition_container partitions;
+	partition_collection_type partitions;
 };
 
 }
