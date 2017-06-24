@@ -105,10 +105,10 @@ void mmcblk_checker::check_volume(mmcblk_check_unit *unit)
 {
 	auto partitions = blk->current_partitions();
 	double first_partition_size = (double)partitions[1].size64 / 1024 / 1024 / 1024;
-	if (first_partition_size < 6) {
+	if (first_partition_size < 3) {
 		emit state_msg(tagname + "'s first partition is "
 					   + QString("%1").arg(first_partition_size)
-					   + "G, not meet the lower limite 6G", MSG_REBOOT);
+					   + "G, not meet the lower limit 6G", MSG_REBOOT);
 		unit->has_passed = false;
 		unit->has_completed = true;
 		stop_check();
@@ -123,7 +123,7 @@ void mmcblk_checker::check_available(mmcblk_check_unit *unit)
 	emit state_msg("checking if " + tagname + " is available", MSG_INFO);
 
 	if (!is_available()) {
-		emit state_msg(tagname + " isn't available", MSG_REBOOT);
+		emit state_msg(tagname + " isn't available(readonly or can't readwrite)", MSG_REBOOT);
 		unit->has_passed = false;
 		unit->has_completed = true;
 		stop_check();
