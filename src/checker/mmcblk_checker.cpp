@@ -91,6 +91,8 @@ void mmcblk_checker::check_part(mmcblk_check_unit *unit)
 		unit->has_completed = false;
 		stop_check();
 	}
+
+	print_partitions();
 }
 
 void mmcblk_checker::check_volume(mmcblk_check_unit *unit)
