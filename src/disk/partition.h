@@ -47,8 +47,12 @@ struct detect_partition_with_devfile {
 			char buffer[256];
 			ifpart.getline(buffer, 256);
 			if (strstr(buffer, name.c_str()) != NULL) {
+				// FIXME: I have no idea why C99 can't initialize variable with " = {}",
+				// and receive segment fault when use memset(&part, 0, sizeof(T))
 				T part;// = {};
-				memset(&part, 0, sizeof(T));
+				part.is_available = false;
+				part.is_disk = false;
+				part.is_mounted = false;
 
 				std::stringstream(buffer) >> part.major
 										  >> part.minor
