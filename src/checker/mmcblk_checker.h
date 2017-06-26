@@ -34,7 +34,7 @@ signals:
 
 public slots:
 	void execute();
-	void carryon(bool part_permission);
+	void rebuild_partition();
 
 private:
 	void check_exist(mmcblk_check_unit *unit);

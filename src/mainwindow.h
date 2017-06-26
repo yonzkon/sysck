@@ -17,7 +17,7 @@ public:
 	~MainWindow();
 
 signals:
-	void continue_check(bool);
+	void repartition();
 	void stop_check();
 
 public slots:
@@ -25,7 +25,7 @@ public slots:
 
 private:
 	void handle_msg_info(QString msg);
-	void handle_msg_permit(QString msg);
+	void handle_msg_repart(QString msg);
 	void handle_msg_reboot(QString msg);
 
 private:
