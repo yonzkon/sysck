@@ -1,11 +1,13 @@
-#include "../src/disk/mbr.h"
+#include "../../src/disk/mbr.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <linux/fs.h>
 
 static void make_mbr(struct mbr *mbr, int total_sectors)
 {
@@ -45,8 +47,16 @@ int main(int argc, char *argv[])
 		return -1;
 	} else {
 		printf("[%s] writed partition table successfully.\n", argv[1]);
-		close(fd);
 	}
+
+	if (ioctl(fd, BLKRRPART, NULL) == -1) {
+		perror("ioctl");
+		close(fd);
+		return -1;
+	} else {
+		printf("[%s] reread partition table successfully.\n", argv[1]);
+	}
+	close(fd);
 
 	return 0;
 }

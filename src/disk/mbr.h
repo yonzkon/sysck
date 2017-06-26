@@ -39,7 +39,7 @@ struct mbr {
 	unsigned short tag;
 } __attribute__ ((packed));
 
-inline
+static inline
 void fba_to_chs(struct chs *chs, unsigned int fba)
 {
 	chs->head = (fba % CYLINDER_SIZE) / 63;
