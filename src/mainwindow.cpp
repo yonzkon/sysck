@@ -1,9 +1,10 @@
+#include "msg_type.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QMessageBox>
+#include <QDebug>
 #include <unistd.h>
 #include <sys/reboot.h>
-#include "msg_type.h"
 
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
@@ -31,11 +32,13 @@ void MainWindow::on_state_msg(QString msg, int type)
 	if (type & MSG_INFO)
 		handle_msg_info(msg);
 
-	if (type & MSG_PERMIT)
-		handle_msg_permit(msg);
+	if (type & MSG_REPART)
+		handle_msg_repart(msg);
 
 	if (type & MSG_REBOOT)
 		handle_msg_reboot(msg);
+
+	qDebug() << msg;
 }
 
 void MainWindow::handle_msg_info(QString msg)
@@ -43,15 +46,16 @@ void MainWindow::handle_msg_info(QString msg)
 	ui->textBrowser->append(msg);
 }
 
-void MainWindow::handle_msg_permit(QString msg)
+void MainWindow::handle_msg_repart(QString msg)
 {
-	QMessageBox msgbox(QMessageBox::Question, NULL, msg,
+	QMessageBox msgbox(QMessageBox::Question, NULL,
+					   msg + "\nCaution! re-partition will wipe all data in SD card!",
 					   QMessageBox::Yes | QMessageBox::No);
-	msgbox.setButtonText(QMessageBox::Yes, "continue");
-	msgbox.setButtonText(QMessageBox::No, "reboot");
+	msgbox.setButtonText(QMessageBox::Yes, "reboot");
+	msgbox.setButtonText(QMessageBox::No, "re-partition");
 
-	if (msgbox.exec() == QMessageBox::Yes) {
-		emit continue_check(true);
+	if (msgbox.exec() == QMessageBox::No) {
+		emit repartition();
 	} else {
 		emit stop_check();
 		sync();

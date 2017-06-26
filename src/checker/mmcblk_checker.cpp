@@ -70,10 +70,18 @@ void mmcblk_checker::execute()
 	run_check();
 }
 
-void mmcblk_checker::carryon(bool part_permission)
+void mmcblk_checker::rebuild_partition()
 {
-	this->part_permission = part_permission;
-	execute();
+	emit state_msg("do partition on " + tagname, MSG_INFO);
+	if (do_part(format_type) == -1) {
+		emit state_msg("do partition on" + tagname + " failed", MSG_REBOOT);
+		stop_check();
+		return;
+	}
+	print_partitions();
+
+	// FIXME: restart checking, and it's still a ugly implementation.
+	run_check();
 }
 
 void mmcblk_checker::check_exist(mmcblk_check_unit *unit)
@@ -83,12 +91,12 @@ void mmcblk_checker::check_exist(mmcblk_check_unit *unit)
 	if (!is_exist()) {
 		emit state_msg(tagname + " does not exist", MSG_REBOOT);
 		unit->has_passed = false;
-		unit->has_completed = true;
 		stop_check();
 	} else {
 		unit->has_passed = true;
-		unit->has_completed = true;
 	}
+
+	unit->has_completed = true;
 }
 
 void mmcblk_checker::check_part(mmcblk_check_unit *unit)
@@ -98,28 +106,12 @@ void mmcblk_checker::check_part(mmcblk_check_unit *unit)
 	if (is_parted()) {
 		unit->has_passed = true;
 		unit->has_completed = true;
-		return;
-	}
-
-	if (!part_permission) {
-		emit state_msg(tagname + " isn't parted", MSG_PERMIT);
+	} else {
+		emit state_msg(tagname + " isn't parted", MSG_REPART);
 		unit->has_passed = false;
 		unit->has_completed = false;
 		stop_check();
-		return;
 	}
-
-	emit state_msg("do partition on " + tagname, MSG_INFO);
-	if (do_part(format_type) == -1) {
-		emit state_msg("do partition on" + tagname + " failed", MSG_REBOOT);
-		unit->has_passed = false;
-		unit->has_completed = true;
-		stop_check();
-		return;
-	}
-	print_partitions();
-
-	unit->has_completed = true;
 }
 
 void mmcblk_checker::check_volume(mmcblk_check_unit *unit)
@@ -131,9 +123,9 @@ void mmcblk_checker::check_volume(mmcblk_check_unit *unit)
 	if (first_partition_size < 6) {
 		emit state_msg(tagname + "'s first partition is "
 					   + QString("%1").arg(first_partition_size)
-					   + "G, not meet the lower limit 6G", MSG_REBOOT);
+					   + "G, not meet the lower limit 6G", MSG_REPART);
 		unit->has_passed = false;
-		unit->has_completed = true;
+		unit->has_completed = false;
 		stop_check();
 	} else {
 		unit->has_passed = true;
@@ -148,9 +140,12 @@ void mmcblk_checker::check_available(mmcblk_check_unit *unit)
 	if (!is_available()) {
 		emit state_msg(tagname + " isn't available(readonly or can't readwrite)", MSG_REBOOT);
 		unit->has_passed = false;
-		unit->has_completed = true;
 		stop_check();
+	} else {
+		unit->has_passed = true;
 	}
+
+	unit->has_completed = true;
 }
 
 void mmcblk_checker::check_fsck(mmcblk_check_unit *unit)
@@ -163,7 +158,7 @@ void mmcblk_checker::check_fsck(mmcblk_check_unit *unit)
 			continue;
 
 		if (!partitions[i].is_fscked) {
-			emit state_msg(tagname + ": fsck timeout or failed", MSG_REBOOT);
+			emit state_msg(tagname + ": fsck timeout or failed", MSG_REPART);
 			unit->has_passed = false;
 			unit->has_completed = true;
 			stop_check();
@@ -189,7 +184,7 @@ void mmcblk_checker::check_fsck(mmcblk_check_unit *unit)
 		}
 
 		if (partitions[i].fsck_status & FSCK_UNCORRECTED) {
-			emit state_msg(tagname + ": File system errors left uncorrected", MSG_REBOOT);
+			emit state_msg(tagname + ": File system errors left uncorrected", MSG_REPART);
 			unit->has_passed = false;
 			unit->has_completed = true;
 			stop_check();
@@ -197,7 +192,7 @@ void mmcblk_checker::check_fsck(mmcblk_check_unit *unit)
 		}
 
 		if (partitions[i].fsck_status & FSCK_ERROR) {
-			emit state_msg(tagname + ": Operational error", MSG_REBOOT);
+			emit state_msg(tagname + ": Operational error", MSG_REPART);
 			unit->has_passed = false;
 			unit->has_completed = true;
 			stop_check();
@@ -268,41 +263,37 @@ int mmcblk_checker::do_part(std::string format_type)
 	if (partitions.size() == 0)
 		return -1;
 
+	struct mbr mbr;
+	memset(&mbr, 0, sizeof(struct mbr));
+	make_mbr(&mbr, partitions[0].size);
+	if (blk->rebuild_table(name, &mbr) != 0) {
+		cout << "[FATAL] " << "rebuild partition table " << name << " failed." << endl;
+		return -1;
+	}
+	cout << "[INFO] rebuild partition table on " << name << " success." << endl;
+
+	if (blk->reread_partition_table() != 0) {
+		cout << "[FATAL] " << "reread partition table failed." << endl;
+		return -1;
+	}
+
 	if (partitions.size() == 1) {
-		cout << "[WARNING] " << name << " is not partitioned." << endl;
+		cout << "[FATAL] "
+				<< name
+				<< " is still not partitioned after rebuild partition table."
+				<< endl;
+		return -1;
+	}
 
-		struct mbr mbr;
-		memset(&mbr, 0, sizeof(struct mbr));
-		make_mbr(&mbr, partitions[0].size);
-		if (blk->rebuild_table(name, &mbr) != 0) {
-			cout << "[FATAL] " << "rebuild partition table " << name << " failed." << endl;
+	sleep(1); // wait os to make device node file
+	for (size_t i = 0; i < partitions.size(); i++) {
+		if (partitions[i].is_disk || !partitions[i].is_available
+			|| partitions[i].is_mounted)
+			continue;
+		partition p = partitions[i];
+		if (blk->format(p, format_type) != 0) {
+			cout << "[FATAL] " << "format " << partitions[i].name << " failed." << endl;
 			return -1;
-		}
-		cout << "[INFO] rebuild partition table on " << name << " success." << endl;
-
-		if (blk->reread_partition_table() != 0) {
-			cout << "[FATAL] " << "reread partition table failed." << endl;
-			return -1;
-		}
-
-		if (partitions.size() == 1) {
-			cout << "[FATAL] "
-				 << name
-				 << " is still not partitioned after rebuild partition table."
-				 << endl;
-			return -1;
-		}
-
-		sleep(1); // wait os to make device node file
-		for (size_t i = 0; i < partitions.size(); i++) {
-			if (partitions[i].is_disk || !partitions[i].is_available
-				|| partitions[i].is_mounted)
-				continue;
-			partition p = partitions[i];
-			if (blk->format(p, format_type) != 0) {
-				cout << "[FATAL] " << "format " << partitions[i].name << " failed." << endl;
-				return -1;
-			}
 		}
 	}
 

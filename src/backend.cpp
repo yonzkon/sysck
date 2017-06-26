@@ -23,8 +23,8 @@ void backend::run()
 		//qRegisterMetaType<msg_level>("msg_level");
 		QObject::connect(this, SIGNAL(start_check()),
 						 checker, SLOT(execute()));
-		QObject::connect(parent(), SIGNAL(continue_check(bool)),
-						 checker, SLOT(carryon(bool)));
+		QObject::connect(parent(), SIGNAL(repartition()),
+						 checker, SLOT(rebuild_partition()));
 		QObject::connect(parent(), SIGNAL(stop_check()),
 						 thread, SLOT(quit()));
 		QObject::connect(checker, SIGNAL(finished()),
@@ -36,7 +36,7 @@ void backend::run()
 		thread->wait();
 
 		QObject::disconnect(this, SIGNAL(start_check()));
-		QObject::disconnect(parent(), SIGNAL(continue_check(bool)));
+		QObject::disconnect(parent(), SIGNAL(repartition()));
 		QObject::disconnect(parent(), SIGNAL(stop_check()));
 		checker->disconnect();
 		delete thread;
