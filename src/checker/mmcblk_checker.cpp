@@ -104,8 +104,10 @@ void mmcblk_checker::check_part(mmcblk_check_unit *unit)
 void mmcblk_checker::check_volume(mmcblk_check_unit *unit)
 {
 	auto partitions = blk->current_partitions();
-	double first_partition_size = (double)partitions[1].size64 / 1024 / 1024 / 1024;
-	if (first_partition_size < 3) {
+	// The reason why we use size rather than size64 is that
+	// size64 maybe incorrect in arm with kernel version 2.6.30
+	double first_partition_size = (double)partitions[1].size / 1024 / 1024 / 2;
+	if (first_partition_size < 6) {
 		emit state_msg(tagname + "'s first partition is "
 					   + QString("%1").arg(first_partition_size)
 					   + "G, not meet the lower limit 6G", MSG_REBOOT);
@@ -139,7 +141,7 @@ void mmcblk_checker::check_fsck(mmcblk_check_unit *unit)
 			continue;
 
 		if (!item.is_fscked) {
-			emit state_msg(tagname + ": Fsck timeout or failed", MSG_REBOOT);
+			emit state_msg(tagname + ": fsck timeout or failed", MSG_REBOOT);
 			unit->has_passed = false;
 			unit->has_completed = true;
 			stop_check();
