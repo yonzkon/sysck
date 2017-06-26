@@ -67,22 +67,21 @@ struct detect_partition_with_devfile {
 	static void detect_extra(T &pt)
 	{
 		// check devfile
-		std::string devfile = "/dev/" + pt.name;
-		if (access(devfile.c_str(), F_OK) == -1) {
-			if (mknod(pt.devfile.c_str(),
+		snprintf(pt.devfile, sizeof(pt.devfile), "/dev/%s", pt.name);
+		if (access(pt.devfile, F_OK) == -1) {
+			if (mknod(pt.devfile,
 					  S_IFBLK | S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP,
 					  makedev(pt.major, pt.minor)) == -1) {
 				perror("mknod");
 				return;
 			}
 		}
-		pt.devfile = "/dev/" + pt.name;
 
 		// check sysdir
 		// TODO
 
 		// check if is available & read low level state of disk
-		int fd = open(pt.devfile.c_str(), O_RDWR);
+		int fd = open(pt.devfile, O_RDWR);
 		if (fd == -1) {
 			perror("open");
 			pt.readonly = 1;
@@ -194,7 +193,7 @@ struct recover_partition_by_utils {
 	// timeout: second
 	static int fsck(T &pt, int timeout)
 	{
-		if (pt.is_disk || !pt.is_available || pt.is_mounted || pt.devfile.empty())
+		if (pt.is_disk || !pt.is_available || pt.is_mounted)
 			return -1;
 
 		int pid = fork();
@@ -205,7 +204,7 @@ struct recover_partition_by_utils {
 
 		if (!pid) {
 			close(0);//close(1);close(2);
-			exit(execlp("fsck", "fsck", "-y", pt.devfile.c_str(), NULL));
+			exit(execlp("fsck", "fsck", "-y", pt.devfile, NULL));
 		}
 
 		int status, rc;
@@ -238,7 +237,7 @@ struct recover_partition_by_utils {
 
 	static int format(const T &pt, std::string type)
 	{
-		if (pt.is_disk || !pt.is_available || pt.is_mounted || pt.devfile.empty())
+		if (pt.is_disk || !pt.is_available || pt.is_mounted)
 			return -1;
 
 		// FIXME: mkfs may prompt 'Proceed anyway? (y,n)'
