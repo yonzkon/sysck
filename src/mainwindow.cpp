@@ -1,9 +1,10 @@
+#include "msg_type.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QMessageBox>
+#include <QDebug>
 #include <unistd.h>
 #include <sys/reboot.h>
-#include "msg_type.h"
 
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
@@ -36,6 +37,8 @@ void MainWindow::on_state_msg(QString msg, int type)
 
 	if (type & MSG_REBOOT)
 		handle_msg_reboot(msg);
+
+	qDebug() << msg;
 }
 
 void MainWindow::handle_msg_info(QString msg)
