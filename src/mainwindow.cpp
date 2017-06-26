@@ -54,7 +54,8 @@ void MainWindow::handle_msg_permit(QString msg)
 		emit continue_check(true);
 	} else {
 		emit stop_check();
-		reboot(0x1234567);
+		sync();
+		reboot(RB_AUTOBOOT);
 		close();
 	}
 }
@@ -66,6 +67,7 @@ void MainWindow::handle_msg_reboot(QString msg)
 	msgbox.setButtonText(QMessageBox::Ok, "reboot");
 	msgbox.exec();
 
-	reboot(0x1234567);
+	sync();
+	reboot(RB_AUTOBOOT);
 	close();
 }
