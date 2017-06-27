@@ -32,6 +32,7 @@ mmcblk_checker::mmcblk_checker(std::string name,
 	, part_permission(false)
 {
 	units.push_back({"check_exist", &mmcblk_checker::check_exist, false, false});
+	units.push_back({"check_readonly", &mmcblk_checker::check_readonly, false, false});
 	units.push_back({"check_part", &mmcblk_checker::check_part, false, false});
 	units.push_back({"check_volume", &mmcblk_checker::check_volume, false, false});
 	units.push_back({"check_available", &mmcblk_checker::check_available, false, false});
@@ -53,7 +54,7 @@ void mmcblk_checker::rebuild_partition()
 {
 	emit state_msg("do partition on " + tagname, MSG_INFO);
 	if (do_part(format_type) == -1) {
-		emit state_msg("do partition on" + tagname + " failed", MSG_REBOOT);
+		emit state_msg("do partition on " + tagname + " failed", MSG_REBOOT);
 		stop_check();
 		return;
 	}
@@ -69,6 +70,21 @@ void mmcblk_checker::check_exist(mmcblk_check_unit *unit)
 
 	if (!is_exist()) {
 		emit state_msg(tagname + " does not exist", MSG_REBOOT);
+		unit->has_passed = false;
+		stop_check();
+	} else {
+		unit->has_passed = true;
+	}
+
+	unit->has_completed = true;
+}
+
+void mmcblk_checker::check_readonly(mmcblk_check_unit *unit)
+{
+	emit state_msg("checking if " + tagname + " is readonly", MSG_INFO);
+
+	if (is_readonly()) {
+		emit state_msg(tagname + " is readonly", MSG_REBOOT);
 		unit->has_passed = false;
 		stop_check();
 	} else {
@@ -213,6 +229,14 @@ void mmcblk_checker::check_finished(mmcblk_check_unit *unit)
 bool mmcblk_checker::is_exist()
 {
 	if (blk->current_partitions().size() == 0)
+		return false;
+	else
+		return true;
+}
+
+bool mmcblk_checker::is_readonly()
+{
+	if (blk->current_partitions()[0].readonly == 0)
 		return false;
 	else
 		return true;

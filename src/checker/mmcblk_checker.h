@@ -38,6 +38,7 @@ public slots:
 
 private:
 	void check_exist(mmcblk_check_unit *unit);
+	void check_readonly(mmcblk_check_unit *unit);
 	void check_part(mmcblk_check_unit *unit);
 	void check_volume(mmcblk_check_unit *unit);
 	void check_available(mmcblk_check_unit *unit);
@@ -45,6 +46,7 @@ private:
 	void check_finished(mmcblk_check_unit *unit);
 
 	bool is_exist();
+	bool is_readonly();
 	bool is_parted();
 	bool is_available();
 
