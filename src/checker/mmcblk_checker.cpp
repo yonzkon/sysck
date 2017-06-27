@@ -39,6 +39,10 @@ mmcblk_checker::mmcblk_checker(std::string name,
 	unit.func = &mmcblk_checker::check_exist;
 	units.push_back(unit);
 
+	unit.name = "check_readonly";
+	unit.func = &mmcblk_checker::check_readonly;
+	units.push_back(unit);
+
 	unit.name = "check_part";
 	unit.func = &mmcblk_checker::check_part;
 	units.push_back(unit);
@@ -74,10 +78,10 @@ void mmcblk_checker::rebuild_partition()
 {
 	emit state_msg("do partition on " + tagname, MSG_INFO);
 	if (do_part(format_type) == -1) {
-		emit state_msg("do partition on" + tagname + " failed", MSG_REBOOT);
+		emit state_msg("do partition on " + tagname + " failed", MSG_REBOOT);
 		stop_check();
 		return;
-	}
+	
 	print_partitions();
 
 	// FIXME: restart checking, and it's still a ugly implementation.
@@ -90,6 +94,21 @@ void mmcblk_checker::check_exist(mmcblk_check_unit *unit)
 
 	if (!is_exist()) {
 		emit state_msg(tagname + " does not exist", MSG_REBOOT);
+		unit->has_passed = false;
+		stop_check();
+	} else {
+		unit->has_passed = true;
+	}
+
+	unit->has_completed = true;
+}
+
+void mmcblk_checker::check_readonly(mmcblk_check_unit *unit)
+{
+	emit state_msg("checking if " + tagname + " is readonly", MSG_INFO);
+
+	if (is_readonly()) {
+		emit state_msg(tagname + " is readonly", MSG_REBOOT);
 		unit->has_passed = false;
 		stop_check();
 	} else {
@@ -235,6 +254,14 @@ void mmcblk_checker::check_finished(mmcblk_check_unit *unit)
 bool mmcblk_checker::is_exist()
 {
 	if (blk->current_partitions().size() == 0)
+		return false;
+	else
+		return true;
+}
+
+bool mmcblk_checker::is_readonly()
+{
+	if (blk->current_partitions()[0].readonly == 0)
 		return false;
 	else
 		return true;
