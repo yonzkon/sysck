@@ -81,6 +81,7 @@ void mmcblk_checker::rebuild_partition()
 		emit state_msg("do partition on " + tagname + " failed", MSG_REBOOT);
 		stop_check();
 		return;
+	}
 	
 	print_partitions();
 
