@@ -4,6 +4,7 @@
 #include "device.h"
 #include "mbr.h"
 #include <cstdlib>
+#include <cstring>
 #include <string>
 #include <sstream>
 #include <fstream>
@@ -35,9 +36,8 @@ struct partition : public device {
 
 template<class T>
 struct detect_partition_with_devfile {
-	typedef std::vector<T> partition_collection_type;
-
-	static void detect(std::string &name, partition_collection_type &partitions)
+	template <class CONT>
+	static void detect(std::string &name, CONT &partitions)
 	{
 		std::ifstream ifpart("/proc/partitions");
 

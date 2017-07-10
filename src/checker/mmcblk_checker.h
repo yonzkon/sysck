@@ -11,6 +11,7 @@ namespace sysck {
 
 typedef disk<
 	partition,
+	std::vector<partition>,
 	detect_partition_with_devfile,
 	recover_partition_by_utils>
 	mmcblk;

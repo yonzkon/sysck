@@ -82,7 +82,6 @@ void mmcblk_checker::rebuild_partition()
 		stop_check();
 		return;
 	}
-	
 	print_partitions();
 
 	// FIXME: restart checking, and it's still a ugly implementation.
